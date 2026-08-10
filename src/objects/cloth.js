@@ -263,8 +263,24 @@ export function createCloth({ position = new Vector3(-9.8, 0.8, -39), rotationY 
     }
   }
 
+  function flush() {
+    arr.set(cur);
+    recomputeNormals();
+    posAttr.needsUpdate = true;
+    normAttr.needsUpdate = true;
+  }
+
   return {
     mesh,
+    /**
+     * Run the solver forward without advancing the clock. Reduced-motion users
+     * get a settled drape instead of the flat rest plane they would otherwise
+     * see, since a frozen clock means gravity never integrates.
+     */
+    settle(steps) {
+      for (let i = 0; i < steps; i++) step(1 / 60, 0, 0);
+      flush();
+    },
     update(dt, time, gust) {
       material.uniforms.uTime.value = time;
       // Fixed 120 Hz substeps: the solver stays stable no matter the refresh rate.
@@ -272,10 +288,7 @@ export function createCloth({ position = new Vector3(-9.8, 0.8, -39), rotationY 
       const sub = clamped > 1 / 90 ? 2 : 1;
       for (let s = 0; s < sub; s++) step(clamped / sub, time, gust);
 
-      arr.set(cur);
-      recomputeNormals();
-      posAttr.needsUpdate = true;
-      normAttr.needsUpdate = true;
+      flush();
     },
   };
 }

@@ -11,7 +11,13 @@ if (existsSync('/opt/pw-browsers/chromium-1194/chrome-linux/chrome')) {
 }
 
 const browser = await chromium.launch(launch);
-const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
+// REDUCED=1 exercises the prefers-reduced-motion path, which freezes the clock
+// and takes a different route through the cloth solver.
+const page = await browser.newPage({
+  viewport: { width: 1440, height: 900 },
+  deviceScaleFactor: 1,
+  reducedMotion: process.env.REDUCED ? 'reduce' : 'no-preference',
+});
 
 const problems = [];
 page.on('console', (m) => {
@@ -47,12 +53,24 @@ for (const t of stops) {
     { timeout: 20000 }
   ).catch(() => console.log(`  (did not settle at t=${t})`));
   const settleMs = Date.now() - settleStart;
-  // Then a beat for the simulation and reveal ramps to catch up.
-  await page.waitForTimeout(1400);
+
+  // Then wait on actual rendered frames, not wall-clock. Under a software
+  // rasteriser a frame can take a second, and a timed wait screenshots the
+  // canvas mid-frame — you get the clear colour and mistake it for a bug.
+  await page.evaluate(
+    (n) =>
+      new Promise((resolve) => {
+        let seen = 0;
+        const tick = () => (++seen >= n ? resolve() : requestAnimationFrame(tick));
+        requestAnimationFrame(tick);
+      }),
+    6
+  );
   const name = `${OUT}/t${String(Math.round(t * 100)).padStart(3, '0')}.png`;
   const shot = await page.screenshot({ path: name });
   const kb = Math.round(shot.length / 1024);
-  if (kb < 40) problems.push(`[blank] ${name} is only ${kb} KB — frame is probably empty`);
+  // A rendered frame carries grain, so it never compresses this small.
+  if (kb < 150) problems.push(`[blank] ${name} is only ${kb} KB — frame is probably empty`);
   const hud = await page.evaluate(() => ({
     fps: document.getElementById('m-fps').textContent,
     draws: document.getElementById('m-draw').textContent,

@@ -89,6 +89,11 @@ npm run preview &
 node scripts/verify.mjs           # OUT=dir STOPS=0,0.3,0.9 to narrow it
 ```
 
+Playwright is a dev dependency and only this script needs it. If your
+environment already has a Chromium (`PLAYWRIGHT_BROWSERS_PATH`), set
+`PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1` before installing; the script falls back to
+a system Chromium path when it finds one.
+
 ## AI-generated source assets
 
 The pipeline this page demonstrates is: generate the look with an image model,

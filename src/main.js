@@ -45,6 +45,10 @@ const monolith = createMonolith();
 
 scene.add(nebula.sky, nebula.dust, cloth.mesh, field.mesh, monolith.group);
 
+// With motion reduced the clock never advances, so the cloth is solved to a
+// resting drape once up front rather than sitting there as a flat plane.
+if (reduced) cloth.settle(55);
+
 /* ── Resolution ──────────────────────────────────────────────────────────── */
 
 // Start conservative and let the frame timer earn the pixels back.
@@ -143,7 +147,7 @@ function frame(now) {
   const clothLive = window4(t, 0.06, 0.20, 0.44, 0.56);
   if (clothLive > 0.001) {
     cloth.mesh.visible = true;
-    cloth.update(reduced ? 0 : dt, time, Math.min(Math.abs(tl.velocity) * 1.6, 0.9));
+    if (!reduced) cloth.update(dt, time, Math.min(Math.abs(tl.velocity) * 1.6, 0.9));
   } else {
     cloth.mesh.visible = false;
   }
