@@ -1,6 +1,6 @@
 import { Scene, Vector3, WebGLRenderer } from 'three';
 import { createNebula } from './objects/nebula.js';
-import { createLineup } from './objects/consoles.js';
+import { createLineup, LINEUP_END } from './objects/consoles.js';
 import { createRig, stationTimes } from './rig.js';
 import { createTimeline } from './scroll.js';
 import { createUI } from './ui.js';
@@ -37,7 +37,7 @@ const rig = createRig();
 const post = new Post(renderer, { bloomPasses: tier.bloomPasses });
 const timeline = createTimeline();
 
-const nebula = createNebula({ dust: tier.dust });
+const nebula = createNebula({ dust: tier.dust, depth: Math.abs(LINEUP_END) + 60 });
 const lineup = createLineup();
 
 scene.add(nebula.sky, nebula.dust, lineup.root);

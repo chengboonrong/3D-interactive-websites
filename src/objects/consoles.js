@@ -277,10 +277,14 @@ function nintendoSwitch2() {
  * the models, each carries a `view` factor and the camera simply steps closer.
  */
 
-/** Cross-shaped d-pad, facing +Z. */
-function dpad(g, material, [x, y, z], size = 0.62, arm = 0.2, depth = 0.09) {
-  part(g, slab(size, arm, depth, 0.04), material, [x, y, z]);
-  part(g, slab(arm, size, depth, 0.04), material, [x, y, z]);
+/**
+ * Cross-shaped d-pad. Authored facing +Z, which suits the vertical face of a
+ * Game Boy; pass LIE to lay it on the horizontal base of a clamshell. Without
+ * that the cross stands upright out of the deck like a little signpost.
+ */
+function dpad(g, material, [x, y, z], size = 0.62, arm = 0.2, depth = 0.09, rot) {
+  part(g, slab(size, arm, depth, 0.04), material, [x, y, z], rot);
+  part(g, slab(arm, size, depth, 0.04), material, [x, y, z], rot);
 }
 
 /** Two face buttons on the diagonal, the way every Game Boy laid them out. */
@@ -393,12 +397,15 @@ function clamshell({ width, depth, thickness, shell, topScreen, bottomScreen, ex
   const body = plastic(shell, { rough: 0.34 });
   const dark = plastic('#1c1c22', { rough: 0.5 });
 
-  // Base, lying flat.
+  // Base, lying flat. The lower half is a screen on the DS line and plain
+  // controls on the Game Boy Advance SP, so it is optional.
   part(g, slab(width, depth, thickness, 0.18), body, [0, thickness / 2, 0], LIE);
-  part(g, slab(bottomScreen[0], bottomScreen[1], 0.03, 0.04), dark,
-    [0, thickness + 0.01, 0.12], LIE);
-  part(g, slab(bottomScreen[0] - 0.12, bottomScreen[1] - 0.12, 0.02, 0.03),
-    screen('#cfe9ff', '#25506f'), [0, thickness + 0.03, 0.12], LIE);
+  if (bottomScreen) {
+    part(g, slab(bottomScreen[0], bottomScreen[1], 0.03, 0.04), dark,
+      [0, thickness + 0.01, 0.12], LIE);
+    part(g, slab(bottomScreen[0] - 0.12, bottomScreen[1] - 0.12, 0.02, 0.03),
+      screen('#cfe9ff', '#25506f'), [0, thickness + 0.03, 0.12], LIE);
+  }
 
   // Lid, hinged along the back edge.
   const lid = new Group();
@@ -421,11 +428,11 @@ function nintendoDS() {
     width: 3.7,
     depth: 2.1,
     thickness: 0.35,
-    shell: '#b7bac0',
+    shell: '#9ea3ac',
     topScreen: [1.95, 1.48],
     bottomScreen: [1.95, 1.48],
     extras: (g, { dark, thickness }) => {
-      dpad(g, dark, [-1.35, thickness + 0.04, 0.35], 0.42, 0.14, 0.06);
+      dpad(g, dark, [-1.35, thickness + 0.04, 0.35], 0.42, 0.14, 0.06, LIE);
       // Four face buttons, laid out as a diamond.
       for (const [dx, dz] of [[0, -0.2], [0, 0.2], [-0.2, 0], [0.2, 0]]) {
         part(g, disc(0.09, 0.07, 10), dark, [1.35 + dx, thickness + 0.05, 0.35 + dz]);
@@ -451,13 +458,98 @@ function nintendo3DS() {
       // Circle Pad above the d-pad — the addition that defined this one.
       part(g, disc(0.19, 0.09, 14), plastic('#d8dae0', { rough: 0.45 }),
         [-1.2, thickness + 0.05, -0.12]);
-      dpad(g, dark, [-1.2, thickness + 0.04, 0.42], 0.34, 0.12, 0.05);
+      dpad(g, dark, [-1.2, thickness + 0.04, 0.42], 0.34, 0.12, 0.05, LIE);
       for (const [dx, dz] of [[0, -0.18], [0, 0.18], [-0.18, 0], [0.18, 0]]) {
         part(g, disc(0.08, 0.07, 10), dark, [1.2 + dx, thickness + 0.05, 0.2 + dz]);
       }
     },
   });
   return { group: g, radius: 2.0 };
+}
+
+/* ── 2003 · Game Boy Advance SP ───────────────────────────────────────────── */
+
+function gameBoyAdvanceSP() {
+  const g = clamshell({
+    // 82 x 84.6 mm folded — very nearly square, and half the width of the DS
+    // that follows it. The lineup's fixed scale is what shows that.
+    width: 2.05,
+    depth: 2.12,
+    thickness: 0.3,
+    shell: '#2f5cb8',
+    // The same 240x160 panel as the 2001 model, now front-lit and folded away.
+    topScreen: [1.53, 1.02],
+    bottomScreen: null,
+    extras: (g, { dark, thickness }) => {
+      const buttons = plastic('#24499a', { rough: 0.4 });
+      dpad(g, dark, [-0.6, thickness + 0.04, 0.42], 0.44, 0.15, 0.06, LIE);
+      part(g, disc(0.14, 0.09, 12), buttons, [0.52, thickness + 0.05, 0.5]);
+      part(g, disc(0.14, 0.09, 12), buttons, [0.78, thickness + 0.05, 0.32]);
+      for (const dx of [-0.16, 0.16]) {
+        part(g, slab(0.3, 0.1, 0.06, 0.04), buttons, [dx, thickness + 0.04, 0.82], LIE);
+      }
+    },
+  });
+  return { group: g, radius: 1.5 };
+}
+
+/* ── 2006 · Nintendo DS Lite ──────────────────────────────────────────────── */
+
+function nintendoDSLite() {
+  const g = clamshell({
+    // 133 x 73.9 mm against the original's 148 x 84 — the same two screens in
+    // a noticeably smaller shell.
+    width: 3.33,
+    depth: 1.85,
+    thickness: 0.27,
+    shell: '#f0efe9',
+    topScreen: [1.95, 1.48],
+    bottomScreen: [1.95, 1.48],
+    extras: (g, { dark, thickness }) => {
+      dpad(g, dark, [-1.2, thickness + 0.04, 0.3], 0.4, 0.13, 0.05, LIE);
+      for (const [dx, dz] of [[0, -0.19], [0, 0.19], [-0.19, 0], [0.19, 0]]) {
+        part(g, disc(0.085, 0.06, 10), dark, [1.2 + dx, thickness + 0.05, 0.3 + dz]);
+      }
+    },
+  });
+  return { group: g, radius: 2.0 };
+}
+
+/* ── 2014 · New Nintendo 3DS ──────────────────────────────────────────────── */
+
+function newNintendo3DS() {
+  const g = clamshell({
+    // 142 x 80.6 mm — a little larger than the 2011 model in every direction.
+    width: 3.55,
+    depth: 2.02,
+    thickness: 0.27,
+    shell: '#2c2e34',
+    topScreen: [2.7, 1.12],
+    bottomScreen: [1.62, 1.24],
+    extras: (g, { dark, thickness }) => {
+      part(g, disc(0.19, 0.08, 14), plastic('#4a4d55', { rough: 0.45 }),
+        [-1.32, thickness + 0.05, -0.18]);
+      dpad(g, dark, [-1.32, thickness + 0.04, 0.42], 0.34, 0.12, 0.05, LIE);
+
+      // Face buttons in the Super Famicom palette — a deliberate callback on
+      // Nintendo's part, and the quickest way to tell this apart from a 3DS.
+      const face = [
+        ['#d8b53a', [0, -0.18]],  // A
+        ['#c4483f', [0, 0.18]],   // B
+        ['#4d9a52', [-0.18, 0]],  // X
+        ['#3f6fb5', [0.18, 0]],   // Y
+      ];
+      for (const [hex, [dx, dz]] of face) {
+        part(g, disc(0.085, 0.07, 10), plastic(hex, { rough: 0.35 }),
+          [1.32 + dx, thickness + 0.05, 0.2 + dz]);
+      }
+
+      // The C-Stick, sat above the face buttons.
+      part(g, disc(0.09, 0.05, 10), plastic('#5a5d66', { rough: 0.5 }),
+        [1.32, thickness + 0.04, -0.2]);
+    },
+  });
+  return { group: g, radius: 2.1 };
 }
 
 /* ── The lineup ───────────────────────────────────────────────────────────── */
@@ -527,18 +619,25 @@ export const CONSOLES = [
   { id: 'gbc', build: gameBoyColor, accent: '#a071e0', year: 1998, aimY: 1.7, view: 0.66 },
   { id: 'gba', build: gameBoyAdvance, accent: '#6f77d8', year: 2001, aimY: 1.25, view: 0.72 },
   { id: 'gcn', build: gameCube, accent: '#7a76d8', year: 2001, aimY: 1.5 },
+  { id: 'gbasp', build: gameBoyAdvanceSP, accent: '#3a6fd0', year: 2003, aimY: 1.0, view: 0.6 },
   { id: 'ds', build: nintendoDS, accent: '#9fb4c8', year: 2004, aimY: 1.15, view: 0.72 },
+  { id: 'dslite', build: nintendoDSLite, accent: '#b8d4e8', year: 2006, aimY: 1.05, view: 0.68 },
   { id: 'wii', build: wii, accent: '#7fd4ff', year: 2006, aimY: 2.1 },
   { id: '3ds', build: nintendo3DS, accent: '#46b0e8', year: 2011, aimY: 1.05, view: 0.7 },
   // The Wii U is two objects side by side and much wider than the rest, so it
   // stands further back from the aisle to frame at the same size.
   { id: 'wiiu', build: wiiU, accent: '#63b8ff', year: 2012, aimY: 1.4, offsetX: 3.4 },
+  { id: 'new3ds', build: newNintendo3DS, accent: '#8b8fd8', year: 2014, aimY: 1.15, view: 0.72 },
   { id: 'switch', build: nintendoSwitch, accent: '#ff6a6a', year: 2017, aimY: 1.6 },
   { id: 'switch2', build: nintendoSwitch2, accent: '#ffa14f', year: 2025, aimY: 2.05 },
 ];
 
+
 export const SPACING = 28;
 export const FIRST_Z = -14;
+
+/** Where the last machine sits, so the backdrop knows how deep to reach. */
+export const LINEUP_END = FIRST_Z - (CONSOLES.length - 1) * SPACING;
 
 export function createLineup() {
   const root = new Group();
