@@ -160,6 +160,50 @@ Also handled: `prefers-reduced-motion`, tab visibility, WebGL context loss and
 restore, iOS URL-bar resize thrash, and a text fallback when WebGL is
 unavailable.
 
+## Serving it on your own network
+
+```
+npm run share
+```
+
+Builds, then serves `dist/` on every interface and prints two URLs:
+
+```
+➜  Local:   http://localhost:4173/
+➜  Network: http://192.168.x.x:4173/
+```
+
+Open the Network one on a phone or tablet on the same Wi-Fi. `npm run preview`
+deliberately stays loopback-only — exposing the machine to the LAN is an
+explicit opt-in, not the default.
+
+Two things the script handles that the bare command does not. It builds first,
+so you cannot serve a stale `dist/` by accident; and it passes `--strictPort`,
+because without it Vite silently walks up to the next free port and the URL you
+just read out to someone is wrong.
+
+For iterating while watching a phone, the dev server works the same way and
+keeps hot reload:
+
+```
+npm run dev -- --host
+```
+
+Worth knowing:
+
+- **This is the only way to find out what the frame rate really is.** Everything
+  in this repo was verified under software rasterisation, which runs the page at
+  single-digit fps and says nothing about real hardware. The HUD in the corner
+  reports fps, draw calls and triangles — that is what it is there for. If a
+  phone struggles, the DPR governor should visibly drop resolution and recover.
+- **The footer figure only matches the gzip number if the server compresses.**
+  Vite's preview server does, so it reads ~153 KB. A bare `python -m http.server`
+  does not, and the page will honestly report the uncompressed ~588 KB.
+- HTTP is fine; WebGL does not need a secure context.
+- macOS and Windows will ask to allow incoming connections the first time.
+- If the phone cannot reach it, the usual causes are a guest Wi-Fi network that
+  isolates clients, the phone being on cellular, or the laptop's firewall.
+
 ## Tests and CI
 
 ```
