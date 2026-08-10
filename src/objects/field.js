@@ -14,7 +14,6 @@ import { NOISE } from '../gen/noise.glsl.js';
  * CPU-side representation at all — nothing to store, nothing to stream.
  */
 
-const COUNT = 4096;
 const SPREAD = 50;
 
 const VERT = /* glsl */ `
@@ -106,7 +105,8 @@ void main(){
 }
 `;
 
-export function createField({ position = new Vector3(0, 0, -74) } = {}) {
+export function createField({ position = new Vector3(0, 0, -74), count = 4096 } = {}) {
+  const COUNT = count;
   // Three sides: a shard, not a cone. Twelve triangles per instance total.
   const geometry = new ConeGeometry(0.26, 1, 3, 1, true);
   geometry.translate(0, 0.5, 0);

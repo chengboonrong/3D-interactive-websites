@@ -20,9 +20,18 @@ body{
 
 #stage{
   position:fixed;
-  inset:0;
+  top:0;
+  left:0;
   width:100%;
   height:100%;
+  /*
+   * Pinned to the LARGE viewport, not the visible one. On iOS the URL bar
+   * collapsing and expanding changes the small viewport continuously while you
+   * scroll, and every one of those changes would otherwise resize the drawing
+   * buffer and reallocate four render targets mid-flick. Sizing to lvh lets the
+   * bar slide over a canvas that never changes.
+   */
+  height:100lvh;
   display:block;
   z-index:0;
 }
@@ -42,8 +51,14 @@ body{
 #scroll{
   position:relative;
   z-index:2;
-  /* Timeline length. Each panel occupies a slice of this. */
-  height:760vh;
+  /*
+   * Timeline length. Expressed in vh so the sequence keeps its pace relative to
+   * the screen, but bounded in pixels at both ends: a landscape phone is only
+   * ~390px tall, and 760vh of that is under 3000px — the entire four-station
+   * sequence would blast past in two flicks. A tall desktop monitor has the
+   * opposite problem.
+   */
+  height:clamp(5000px, 760vh, 9000px);
 }
 
 .panel{
@@ -52,7 +67,13 @@ body{
   left:0;
   width:100%;
   height:100dvh;
-  padding:var(--gutter);
+  /* viewport-fit=cover means the notch and the home indicator are ours to
+     avoid; the gutter is the floor, the inset wins when it is larger. */
+  padding:
+    max(var(--gutter), env(safe-area-inset-top))
+    max(var(--gutter), env(safe-area-inset-right))
+    max(var(--gutter), env(safe-area-inset-bottom))
+    max(var(--gutter), env(safe-area-inset-left));
   display:flex;
   flex-direction:column;
   justify-content:flex-end;
@@ -99,6 +120,14 @@ h2{
   max-width:46ch;
 }
 
+/* Live figures written in from the quality tier. They are claims about what is
+   running, so they are marked up as emphasis, not styled as bold. */
+.lede b{
+  font-weight:inherit;
+  color:var(--ink);
+  font-variant-numeric:tabular-nums;
+}
+
 .scrollcue{
   margin-top:26px;
   display:flex;
@@ -123,8 +152,8 @@ h2{
 
 #hud{
   position:fixed;
-  right:var(--gutter);
-  bottom:var(--gutter);
+  right:max(var(--gutter), env(safe-area-inset-right));
+  bottom:max(var(--gutter), env(safe-area-inset-bottom));
   z-index:3;
   display:flex;
   align-items:flex-end;
@@ -156,9 +185,99 @@ h2{
 
 .fallback{padding:var(--gutter);font-size:16px}
 
+/* ── Breakpoints ──────────────────────────────────────────────────────────
+ *
+ * The 3D framing corrects itself continuously from the viewport aspect
+ * (see framing() in src/rig.js), so these only handle type and chrome.
+ */
+
+/* Narrow desktop windows and tablets: the headline stops being the loudest
+   thing in the frame before the copy starts wrapping badly. */
+@media (max-width:900px){
+  h2{max-width:14ch}
+  .lede{max-width:38ch}
+  #hud dl{gap:12px}
+}
+
+/* Phones. The metrics HUD goes — three numbers nobody can read at arm's
+   length are not worth the pixels next to the copy. */
 @media (max-width:720px){
   #hud dl{display:none}
   .lede{max-width:100%}
+  .rail{height:64px}
+}
+
+@media (max-width:640px){
+  :root{--gutter:20px}
+  .panel{gap:12px}
+
+  /* Every panel anchors to the bottom on a phone, including the two that are
+     centred on desktop. The camera lifts each subject out of the lower frame
+     to make room (see framing() in src/rig.js), so this is the half of that
+     arrangement the copy is responsible for. */
+  header.panel,
+  footer.panel{justify-content:flex-end}
+
+  /* And a deeper scrim under it, because the copy now always sits over the
+     busiest part of a tall frame rather than the darkest. */
+  #grade{
+    background:
+      radial-gradient(130% 70% at 50% 34%, transparent 42%, rgba(3,4,8,.58) 100%),
+      linear-gradient(180deg, rgba(3,4,8,.5) 0%, transparent 18%, transparent 46%, rgba(3,4,8,.82) 92%);
+  }
+
+  h1{font-size:clamp(56px,19vw,110px);letter-spacing:-.035em}
+  h2{font-size:clamp(28px,7.6vw,44px);max-width:none}
+  .lede{font-size:15px;line-height:1.5}
+  .kicker{font-size:10px;letter-spacing:.18em}
+  .scrollcue{margin-top:18px}
+  .scrollcue span{height:28px}
+}
+
+/* Small phones: one more step down so the headline still fits two lines. */
+@media (max-width:380px){
+  h1{font-size:clamp(46px,17vw,72px)}
+  h2{font-size:26px}
+  .lede{font-size:14px}
+}
+
+/*
+ * Landscape phones are the awkward one: plenty of width, almost no height.
+ * Bottom-anchored copy collides with the subject, and a 19vw headline would
+ * be taller than the viewport, so the panels centre and the type shrinks hard.
+ */
+@media (orientation:landscape) and (max-height:520px){
+  :root{--gutter:18px}
+  .panel{justify-content:center;gap:8px}
+  #hud dl{display:none}
+
+  /*
+   * Centred copy in a short frame has no dark band to sit in — the bottom
+   * scrim that carries it in portrait is nowhere near it. So the panel brings
+   * its own, as a horizontal falloff: type on the left, subject still readable
+   * on the right.
+   */
+  .panel::before{
+    content:'';
+    position:absolute;
+    top:0;
+    bottom:0;
+    left:0;
+    width:min(66%,620px);
+    background:linear-gradient(90deg, rgba(3,4,8,.86) 0%, rgba(3,4,8,.62) 48%, transparent 100%);
+    z-index:-1;
+  }
+  h1{font-size:clamp(40px,9vh,64px)}
+  h2{font-size:clamp(22px,5.2vh,34px);max-width:20ch}
+  .lede{font-size:13px;line-height:1.45;max-width:36ch}
+  .scrollcue{display:none}
+  .rail{height:44px}
+}
+
+/* Anything without a hover-capable pointer loses the cursor parallax in JS
+   too, so nothing here depends on hover. */
+@media (hover:none){
+  .scrollcue{opacity:.85}
 }
 
 @media (prefers-reduced-motion:reduce){

@@ -104,8 +104,9 @@ void main(){
 `;
 
 export class Post {
-  constructor(renderer) {
+  constructor(renderer, { bloomPasses = 3 } = {}) {
     this.renderer = renderer;
+    this.bloomPasses = bloomPasses;
     this.scene = new Scene();
 
     const rtOpts = {
@@ -174,8 +175,9 @@ export class Post {
 
     this.draw(this.bright, this.blurA);
 
-    // Three ping-pong pairs at widening radii approximate a much larger kernel.
-    for (let i = 0; i < 3; i++) {
+    // Ping-pong pairs at widening radii approximate a much larger kernel. One
+    // fewer pair is the cheapest quality lever there is on a phone.
+    for (let i = 0; i < this.bloomPasses; i++) {
       const radius = 1.0 + i * 1.9;
       this.blurU.uTex.value = this.blurA.texture;
       this.blurU.uDir.value.set(radius / this.bw, 0);

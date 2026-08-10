@@ -2,10 +2,8 @@ import { DoubleSide, Mesh, PlaneGeometry, ShaderMaterial, Vector3 } from 'three'
 import { NOISE } from '../gen/noise.glsl.js';
 import { weaveTexture } from '../gen/textures.js';
 
-const N = 40;                 // 40 x 40 = 1600 masses
 const SPAN_X = 10.5;
 const SPAN_Y = 7.0;
-const ITERATIONS = 8;         // constraint relaxation passes per frame
 const DAMPING = 0.976;
 const GRAVITY = new Vector3(0, -9.0, 0);
 
@@ -105,7 +103,15 @@ void main(){
 }
 `;
 
-export function createCloth({ position = new Vector3(-9.8, 0.8, -39), rotationY = 0.42 } = {}) {
+export function createCloth({
+  position = new Vector3(-9.8, 0.8, -39),
+  rotationY = 0.42,
+  segments = 40,        // 40 x 40 = 1,600 masses
+  iterations = 8,       // constraint relaxation passes per frame
+} = {}) {
+  const N = segments;
+  const ITERATIONS = iterations;
+
   const geometry = new PlaneGeometry(SPAN_X, SPAN_Y, N - 1, N - 1);
   const posAttr = geometry.attributes.position;
   const normAttr = geometry.attributes.normal;

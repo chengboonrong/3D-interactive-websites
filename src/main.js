@@ -7,9 +7,11 @@ import { createRig } from './rig.js';
 import { createTimeline, band, window4 } from './scroll.js';
 import { createUI } from './ui.js';
 import { Post } from './gfx/post.js';
+import { detectTier } from './tier.js';
 
 const canvas = document.getElementById('stage');
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const tier = detectTier();
 
 let renderer;
 try {
@@ -28,20 +30,34 @@ try {
 
 renderer.setClearColor(0x05060a, 1);
 renderer.autoClear = false;
-// Nine passes per frame; without this the composite pass resets the counters
-// and the HUD reports 1 draw call forever.
+// Seven to nine passes per frame depending on tier; without this the composite
+// pass resets the counters and the HUD reports 1 draw call forever.
 renderer.info.autoReset = false;
 
 const scene = new Scene();
 const rig = createRig();
-const post = new Post(renderer);
+const post = new Post(renderer, { bloomPasses: tier.bloomPasses });
 const timeline = createTimeline();
 const ui = createUI();
 
-const nebula = createNebula();
-const cloth = createCloth();
-const field = createField();
+const nebula = createNebula({ dust: tier.dust });
+const cloth = createCloth({ segments: tier.clothSegments, iterations: tier.clothIterations });
+const field = createField({ count: tier.shards });
 const monolith = createMonolith();
+
+// The copy quotes exact counts, and the low tier changes them. Writing the
+// real figures in beats shipping a page that claims 4,096 shards while drawing
+// 2,000 of them.
+const WORDS = { 6: 'six', 8: 'eight' };
+const facts = {
+  masses: (tier.clothSegments ** 2).toLocaleString('en-US'),
+  passes: WORDS[tier.clothIterations] || String(tier.clothIterations),
+  shards: tier.shards.toLocaleString('en-US'),
+};
+for (const el of document.querySelectorAll('[data-fact]')) {
+  const value = facts[el.dataset.fact];
+  if (value) el.textContent = value;
+}
 
 scene.add(nebula.sky, nebula.dust, cloth.mesh, field.mesh, monolith.group);
 
@@ -51,15 +67,26 @@ if (reduced) cloth.settle(55);
 
 /* ── Resolution ──────────────────────────────────────────────────────────── */
 
-// Start conservative and let the frame timer earn the pixels back.
-let dprCap = Math.min(devicePixelRatio || 1, 1.75);
-let dpr = Math.min(devicePixelRatio || 1, 1.35);
+// Start conservative and let the frame timer earn the pixels back. Phones
+// report a device pixel ratio of 3 and cannot afford to honour it here — the
+// sky shader is fill-rate bound, so the cap is where most of the budget is won.
+const dprCap = Math.min(devicePixelRatio || 1, tier.dprCap);
+let dpr = Math.min(devicePixelRatio || 1, tier.dprStart);
 let width = 0;
 let height = 0;
 
+let appliedDpr = 0;
+
 function resize() {
-  width = innerWidth;
-  height = innerHeight;
+  // Measure the canvas, not the window: #stage is pinned to the large viewport
+  // so its box is stable while the mobile URL bar slides over it.
+  const w = canvas.clientWidth || innerWidth;
+  const h = canvas.clientHeight || innerHeight;
+  if (w === width && h === height && dpr === appliedDpr) return;
+
+  width = w;
+  height = h;
+  appliedDpr = dpr;
   renderer.setPixelRatio(dpr);
   renderer.setSize(width, height, false);
   post.setSize(width, height, dpr);
@@ -68,6 +95,10 @@ function resize() {
 }
 
 addEventListener('resize', resize, { passive: true });
+// iOS reports the pre-rotation viewport on the orientationchange event itself,
+// so the follow-up resize is what actually has the right numbers. Re-running it
+// on the next frame covers the browsers that do not fire one.
+addEventListener('orientationchange', () => requestAnimationFrame(resize), { passive: true });
 resize();
 
 /* ── Adaptive quality ────────────────────────────────────────────────────── */
@@ -86,8 +117,8 @@ function adapt(dt) {
     slowFrames = 0;
   }
 
-  if (slowFrames > 45 && dpr > 0.75) {
-    dpr = Math.max(0.75, dpr - 0.15);
+  if (slowFrames > 45 && dpr > tier.dprFloor) {
+    dpr = Math.max(tier.dprFloor, dpr - 0.15);
     slowFrames = 0;
     resize();
   } else if (fastFrames > 240 && dpr < dprCap) {

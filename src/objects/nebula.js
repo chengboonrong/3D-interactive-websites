@@ -115,7 +115,7 @@ void main(){
 }
 `;
 
-export function createNebula() {
+export function createNebula({ dust: dustCount = 2600 } = {}) {
   const sky = new Mesh(
     new IcosahedronGeometry(1, 5),
     new ShaderMaterial({
@@ -136,7 +136,7 @@ export function createNebula() {
   sky.frustumCulled = false;
   sky.renderOrder = -1;
 
-  const COUNT = 2600;
+  const COUNT = dustCount;
   const pos = new Float32Array(COUNT * 3);
   const size = new Float32Array(COUNT);
   const seed = new Float32Array(COUNT);

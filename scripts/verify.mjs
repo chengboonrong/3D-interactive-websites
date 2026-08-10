@@ -14,8 +14,14 @@ const browser = await chromium.launch(launch);
 // REDUCED=1 exercises the prefers-reduced-motion path, which freezes the clock
 // and takes a different route through the cloth solver.
 const page = await browser.newPage({
-  viewport: { width: 1440, height: 900 },
-  deviceScaleFactor: 1,
+  // VIEWPORT=390x844 to check a breakpoint; DSF=2 to check a retina phone.
+  viewport: {
+    width: Number((process.env.VIEWPORT || '1440x900').split('x')[0]),
+    height: Number((process.env.VIEWPORT || '1440x900').split('x')[1]),
+  },
+  deviceScaleFactor: Number(process.env.DSF || 1),
+  isMobile: !!process.env.MOBILE,
+  hasTouch: !!process.env.MOBILE,
   reducedMotion: process.env.REDUCED ? 'reduce' : 'no-preference',
 });
 
@@ -70,7 +76,7 @@ for (const t of stops) {
   const shot = await page.screenshot({ path: name });
   const kb = Math.round(shot.length / 1024);
   // A rendered frame carries grain, so it never compresses this small.
-  if (kb < 150) problems.push(`[blank] ${name} is only ${kb} KB — frame is probably empty`);
+  if (kb < 150 * (Number(process.env.VIEWPORT?.split('x')[0] || 1440) / 1440)) problems.push(`[blank] ${name} is only ${kb} KB — frame is probably empty`);
   const hud = await page.evaluate(() => ({
     fps: document.getElementById('m-fps').textContent,
     draws: document.getElementById('m-draw').textContent,
