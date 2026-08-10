@@ -1,11 +1,12 @@
-# Aurelia — cinematic motion without video
+# A history in plastic
 
-A scroll-driven landing page whose "footage" is a live Three.js scene. There is no
-video file, no image sequence, and no texture download: every pixel is solved on
-the GPU as you scroll.
+Seven Nintendo home consoles, 1990 to 2025, modelled from primitives and
+rendered live in the browser as you scroll. No photographs, no downloaded
+textures, no video.
 
-The whole page — renderer, shaders, cloth solver, post chain, textures — is
-**546 KB on disk / 143 KB gzipped** (119 KB brotli). A two-second 1080p H.264 clip is larger.
+**566 KB on disk / 150 KB gzipped** (124 KB brotli), of which three.js is the overwhelming
+majority. The seven consoles, the backdrop, the environment map and the film
+grade together add a few KB.
 
 ```
 npm install
@@ -14,76 +15,94 @@ npm run build
 npm run size      # per-file raw / gzip / brotli report
 ```
 
-## The four beats
+## What is on the page
 
-The page is one continuous camera move through four stations. Scroll position
-maps to a single normalised `t ∈ [0,1]`; camera, grade, and copy are all pure
-functions of it, so the sequence scrubs backwards as cleanly as it plays forward.
+| | Console | Year | Scale in the scene |
+| --- | --- | --- | --- |
+| 01 | Super Famicom | 1990 | 200 × 72 × 242 mm |
+| 02 | Nintendo 64 | 1996 | 260 × 73 × 190 mm |
+| 03 | GameCube | 2001 | 150 × 110 × 161 mm |
+| 04 | Wii | 2006 | 44 × 157 × 215 mm |
+| 05 | Wii U | 2012 | 172 × 46 × 269 mm, plus the GamePad |
+| 06 | Nintendo Switch | 2017 | 239 × 102 mm across the Joy-Con |
+| 07 | Nintendo Switch 2 | 2025 | 272 × 116 mm, in its dock |
 
-| `t` | Station | What is actually running |
-| --- | --- | --- |
-| 0.00–0.20 | **Nebula** | Domain-warped fbm on an inverted icosahedron, plus 2,600 additive motes for parallax |
-| 0.20–0.45 | **Cloth** | 1,600-mass verlet lattice, 8 relaxation passes/frame, thin-film interference shading |
-| 0.45–0.72 | **Field** | 4,096 instanced shards in one draw call, displaced entirely on the vertex stage |
-| 0.72–1.00 | **Monolith** | Equirectangular reflection sampled straight from a 1024×512 canvas gradient |
+Everything is drawn at **one scale — 1 unit to 40 mm** — so the sizes are true
+against each other. That is why the Wii looks so slight next to the Nintendo 64:
+it is 44 mm thick and the N64 is 260 mm wide.
 
-CSS breakpoints at 900 / 720 / 640 / 380 px plus a landscape-under-520px rule
-handle type and chrome only — the 3D framing is continuous, so there is nothing
-for them to keep in sync.
+## What these models are, and are not
 
-## Where the weight went
+They are **likenesses of the industrial design** — proportions, silhouettes,
+colours, the details that make each one recognisable at a glance. They are built
+from three primitives (a rounded slab, a rounded loop, a cylinder), because that
+is genuinely what most consumer plastic is.
 
-| | gzip |
-| --- | --- |
-| `three` (tree-shaken) | ~137 KB |
-| Application + all shaders | ~4 KB |
-| CSS | ~2 KB |
-| HTML | ~1 KB |
-| **Textures, environment maps, video** | **0 KB** |
+They are **not** reproductions, and the page carries **no logos, no wordmarks, no
+interfaces and no artwork**. The screens show an abstract gradient; the Switch 2
+dock face is deliberately blank. Nintendo, Super Famicom, Nintendo 64, GameCube,
+Wii, Wii U and Nintendo Switch are trademarks of Nintendo. This is an unofficial
+rendering exercise with no affiliation.
 
-Three.js is essentially the entire payload. Everything that would normally be a
-download is a function instead:
+The sales figures in the copy are the widely published lifetime numbers and are
+worth checking against Nintendo's own consolidated sales data before this goes
+anywhere public.
 
-- **Fabric weave** — an analytic height field rasterised to a 256² normal map at
-  boot (`src/gen/textures.js`). Band-limited on purpose: the first version used
-  per-texel white noise and minified into RGB confetti.
-- **Environment map** — a 1024×512 canvas with a horizon gradient and three
-  softbox lights. Sampled equirectangularly with a 3-tap spread for roughness,
-  which skips PMREM entirely.
-- **Grain / dither** — one 64² noise texture, sampled once per pixel in the
-  composite pass, monochrome and weighted toward the shadows the way emulsion is.
+## How it is built
 
-## Rendering notes
+**Nothing is downloaded.** Every texture is a function:
 
-**Post chain is hand-rolled** (`src/gfx/post.js`) rather than `EffectComposer` +
-`UnrealBloomPass`: scene → HDR target → soft-knee bright pass → three separable
-blur ping-pongs at quarter resolution → composite with ACES, lateral chromatic
-aberration, vignette, grain. Seven to nine passes depending on tier, ~4 KB of
-GLSL, and it tree-shakes to nothing beyond the core renderer.
+- The **environment map** reflected in every plastic surface is a 1024×512
+  canvas — a horizon gradient and three softbox lights — sampled
+  equirectangularly with a three-tap spread standing in for roughness. That
+  skips PMREM entirely.
+- **Grain and dither** share one 64² noise texture, sampled once per pixel in
+  the composite pass, monochrome and weighted toward the shadows the way
+  emulsion is.
+- The **backdrop** is domain-warped fbm on an inverted icosahedron, held well
+  down in exposure. It takes its hue from whichever console is currently the
+  subject, so the room changes colour as the lineup moves through the eras.
 
-**Colour management is manual.** The scene renders to a half-float linear target;
-all generated textures are tagged `NoColorSpace` and authored as linear data, and
-the composite pass does tonemapping and the transfer function itself. Nothing is
-decoded or encoded twice.
+**One material for all seven.** A half-Lambert plastic shader with an
+equirectangular reflection, a Fresnel term and a metallic switch, cached by
+appearance so the whole lineup shares a handful of programs.
 
-**Everything is a function of `t`.** No scroll listeners fire animations, no
-timelines hold state. That is what makes fast scrubbing and reverse scrolling
-behave.
+**The camera runs a side aisle.** The obvious layout — a viewing position
+squarely in front of each console — cannot work, because the path from one
+viewing point to the next runs straight through the console you just looked at.
+Offsetting the whole track sideways fixes that and is the better shot anyway:
+every console is approached, passed and left behind at an angle. Each one turns
+to follow the camera, but only 88% of the way, so the residual angle keeps the
+parallax alive.
 
-**Cost scales with what is on screen.** Each station simulates and draws only
-while it is near the lens (`src/main.js`). The cloth solver — the one genuinely
-expensive thing here — is idle for three quarters of the page.
+**Position and aim are walked in parameter space, not by arc length.**
+`getPointAt()` spaces samples evenly along each curve's own length, and two
+curves of different lengths desynchronise — by the middle of the page the lens
+was pointing several units short of its subject. `getPoint()` maps `t` across
+the control points, which are one-to-one between the two arrays, so the aim is
+pinned to its console by construction. It also makes the station times exact
+rather than sampled.
 
-**Resolution adapts.** Rendering starts at DPR 1.35 (1.0 on a phone), drops
-toward 0.75 (0.6) after sustained slow frames, and climbs back to 1.75 (1.5)
-once the frame timer has been comfortable.
+**The copy is timed from the camera, not typed.** Each panel's window is derived
+from the parameterisation at boot, so adding an eighth console cannot leave the
+captions behind.
 
-**The frame reframes itself for the viewport.** The shot list was blocked for
-16:9. A perspective camera holds its *vertical* field of view fixed, so on a
-9:19.5 phone the horizontal view collapses to a quarter of what was composed and
-every wide subject runs off both edges. `framing()` in `src/rig.js` corrects it
-continuously from the aspect ratio — no breakpoints — with three moves split
-between them, because any one alone has a cost:
+**Post is hand-rolled** rather than `EffectComposer` + `UnrealBloomPass`: scene →
+HDR target → soft-knee bright pass → separable blur ping-pongs at quarter
+resolution → composite with ACES, lateral chromatic aberration, vignette and
+grain. Seven to nine passes depending on tier, ~4 KB of GLSL.
+
+**Colour management is manual.** Linear half-float target, all generated
+textures tagged `NoColorSpace`, hex colours decoded from sRGB where they are
+authored, transfer function applied once in the composite.
+
+## Phones and tablets
+
+**The frame reframes itself.** The shot list was blocked for 16:9. A perspective
+camera holds its *vertical* field of view fixed, so on a 9:19.5 phone the
+horizontal view collapses to a quarter of what was composed. `framing()` in
+`src/rig.js` corrects it continuously from the aspect ratio — no breakpoints —
+with the work split three ways, because any one alone has a cost:
 
 | | laptop | phone portrait |
 | --- | --- | --- |
@@ -93,28 +112,36 @@ between them, because any one alone has a cost:
 
 Widening alone distorts; dollying alone shrinks everything against a tall frame.
 The lift raises each subject out of the lower third so the copy — which anchors
-to the bottom on phones — never lands on top of it.
+to the bottom on phones — never lands on top of it. Past roughly 2:1 the copy
+sits *beside* the subject instead, so the lift becomes a horizontal shift.
 
-**Quality tiers.** `src/tier.js` makes one decision at boot from viewport size,
-`hardwareConcurrency` and pointer coarseness. It is not a breakpoint: a
-1024-wide tablet and a 1024-wide window on a workstation want different budgets
-and CSS cannot tell them apart. On the low tier the dust drops from 2,600 to
-1,100 motes, the field from 4,096 to 2,000 shards, the cloth from 40×40 to 30×30
-masses at 6 solver passes instead of 8, and bloom loses one blur pair.
+**Quality tiers.** `src/tier.js` makes one decision at boot from pointer
+coarseness, short-edge length and core count. Not a breakpoint: a 1024-wide
+tablet and a 1024-wide window on a workstation want different budgets and CSS
+cannot tell them apart. The low tier halves the dust motes, drops a bloom blur
+pair, and caps DPR at 1.5 rather than honouring a phone's reported 3.
 
-Also handled: `prefers-reduced-motion` (holds a static frame), tab visibility,
-WebGL context loss and restore, and a text fallback when WebGL is unavailable.
+CSS breakpoints at 900 / 720 / 640 / 380 px plus a landscape-under-520px rule
+handle type and chrome only.
+
+Also handled: `prefers-reduced-motion`, tab visibility, WebGL context loss and
+restore, iOS URL-bar resize thrash, and a text fallback when WebGL is
+unavailable.
 
 ## Verifying it
 
-`scripts/verify.mjs` drives headless Chromium through nine scroll positions,
-waits for the smoothed timeline to converge at each one, screenshots, and reports
-FPS, draw calls, triangle count and any console output.
+`scripts/verify.mjs` drives headless Chromium through a list of scroll
+positions, waits for the smoothed timeline to converge *and* for real frames to
+render, screenshots, and reports frame time, draw calls, triangle count and any
+console output.
 
 ```
 npm run build
 npm run preview &
-node scripts/verify.mjs           # OUT=dir STOPS=0,0.3,0.9 to narrow it
+node scripts/verify.mjs                      # every station
+STOPS=0,0.5,1 OUT=shots node scripts/verify.mjs
+VIEWPORT=390x844 MOBILE=1 node scripts/verify.mjs
+REDUCED=1 node scripts/verify.mjs
 ```
 
 Playwright is a dev dependency and only this script needs it. If your
@@ -122,34 +149,22 @@ environment already has a Chromium (`PLAYWRIGHT_BROWSERS_PATH`), set
 `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1` before installing; the script falls back to
 a system Chromium path when it finds one.
 
-## AI-generated source assets
-
-The pipeline this page demonstrates is: generate the look with an image model,
-then rebuild it as real-time geometry and shaders instead of shipping the frames.
-What is committed here is the second half — the reconstruction. Every visual is
-procedural, which is why the texture budget is zero.
-
-To reconstruct from generated keyframes instead, the substitution points are
-`envTexture()` in `src/gen/textures.js` (the reflected environment) and the
-palette uniforms in `src/objects/nebula.js` (the sky grade). Both are small
-enough that a compressed AVIF keyframe would still leave the page under 300 KB
-gzipped — but sampling a generated plate costs more bytes than the noise function
-that replaced it, so the procedural route won on both size and controllability.
-
 ## Layout
 
 ```
 src/
-  main.js              frame loop, station gating, adaptive DPR
-  rig.js               camera + aim splines
+  main.js              frame loop, panel timing, adaptive DPR
+  rig.js               camera + aim splines, aspect framing
   scroll.js            scroll → smoothed timeline + velocity
   ui.js                copy panels, progress rail, HUD
+  tier.js              one boot-time quality decision
   gfx/post.js          bright pass, blur, composite
   gfx/fullscreen.js    fullscreen-triangle helper
-  gen/textures.js      weave, environment, dither
+  gen/textures.js      environment map, dither
   gen/noise.glsl.js    simplex + fbm chunk shared by every shader
-  tier.js              one boot-time quality decision
-  objects/             nebula, cloth, field, monolith
+  objects/kit.js       rounded slab / loop / cylinder, plastic material
+  objects/consoles.js  the seven builders and the lineup
+  objects/nebula.js    backdrop and dust
 scripts/
   size-report.mjs      raw / gzip / brotli per file
   verify.mjs           headless render check

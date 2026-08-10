@@ -1,10 +1,8 @@
-import { Scene, WebGLRenderer } from 'three';
+import { Scene, Vector3, WebGLRenderer } from 'three';
 import { createNebula } from './objects/nebula.js';
-import { createCloth } from './objects/cloth.js';
-import { createField } from './objects/field.js';
-import { createMonolith } from './objects/monolith.js';
-import { createRig } from './rig.js';
-import { createTimeline, band, window4 } from './scroll.js';
+import { createLineup } from './objects/consoles.js';
+import { createRig, stationTimes } from './rig.js';
+import { createTimeline } from './scroll.js';
 import { createUI } from './ui.js';
 import { Post } from './gfx/post.js';
 import { detectTier } from './tier.js';
@@ -38,32 +36,51 @@ const scene = new Scene();
 const rig = createRig();
 const post = new Post(renderer, { bloomPasses: tier.bloomPasses });
 const timeline = createTimeline();
-const ui = createUI();
 
 const nebula = createNebula({ dust: tier.dust });
-const cloth = createCloth({ segments: tier.clothSegments, iterations: tier.clothIterations });
-const field = createField({ count: tier.shards });
-const monolith = createMonolith();
+const lineup = createLineup();
 
-// The copy quotes exact counts, and the low tier changes them. Writing the
-// real figures in beats shipping a page that claims 4,096 shards while drawing
-// 2,000 of them.
-const WORDS = { 6: 'six', 8: 'eight' };
-const facts = {
-  masses: (tier.clothSegments ** 2).toLocaleString('en-US'),
-  passes: WORDS[tier.clothIterations] || String(tier.clothIterations),
-  shards: tier.shards.toLocaleString('en-US'),
-};
-for (const el of document.querySelectorAll('[data-fact]')) {
-  const value = facts[el.dataset.fact];
-  if (value) el.textContent = value;
+scene.add(nebula.sky, nebula.dust, lineup.root);
+
+/* ── Copy timing ─────────────────────────────────────────────────────────── */
+
+// Each console panel is pinned to the point on the timeline where the camera is
+// actually in front of that console, sampled from the curve. Hand-typed windows
+// drift the moment the path or the spacing changes; these cannot.
+const stations = stationTimes();
+const HALF = 0.038;
+
+for (const el of document.querySelectorAll('.panel[data-station]')) {
+  const t = stations[Number(el.dataset.station)];
+  el.dataset.in = Math.max(0, t - HALF).toFixed(4);
+  el.dataset.out = Math.min(1, t + HALF).toFixed(4);
 }
 
-scene.add(nebula.sky, nebula.dust, cloth.mesh, field.mesh, monolith.group);
+const intro = document.querySelector('header.panel');
+intro.dataset.in = '0';
+// No floor on this: clamping it up was what let the title sit on top of the
+// first console's caption. The lead-in on the camera path is what makes room.
+intro.dataset.out = Math.max(0.02, stations[0] - HALF - 0.02).toFixed(4);
 
-// With motion reduced the clock never advances, so the cloth is solved to a
-// resting drape once up front rather than sitting there as a flat plane.
-if (reduced) cloth.settle(55);
+const outro = document.querySelector('footer.panel');
+outro.dataset.in = Math.min(0.97, stations[stations.length - 1] + HALF + 0.02).toFixed(4);
+outro.dataset.out = '1';
+
+const ui = createUI();
+
+// The footer quotes the payload, so it reads the real transferred size rather
+// than a number in the copy that goes stale the next time a dependency moves.
+addEventListener('load', () => {
+  const el = document.querySelector('[data-fact="kb"]');
+  if (!el) return;
+  const nav = performance.getEntriesByType('navigation')[0];
+  let bytes = nav ? nav.encodedBodySize : 0;
+  for (const r of performance.getEntriesByType('resource')) bytes += r.encodedBodySize || 0;
+  // encodedBodySize is zeroed for cross-origin responses without
+  // Timing-Allow-Origin. Everything here is same-origin, but if a proxy hides
+  // it, leaving the authored figure alone beats printing "0".
+  if (bytes > 0) el.textContent = Math.round(bytes / 1024);
+});
 
 /* ── Resolution ──────────────────────────────────────────────────────────── */
 
@@ -74,7 +91,6 @@ const dprCap = Math.min(devicePixelRatio || 1, tier.dprCap);
 let dpr = Math.min(devicePixelRatio || 1, tier.dprStart);
 let width = 0;
 let height = 0;
-
 let appliedDpr = 0;
 
 function resize() {
@@ -130,6 +146,10 @@ function adapt(dt) {
 
 /* ── Frame loop ──────────────────────────────────────────────────────────── */
 
+// The backdrop is tinted by whichever console is nearest, eased rather than
+// switched so the room changes colour as you travel rather than at a boundary.
+const accent = new Vector3().copy(lineup.items[0].accentVec);
+
 let last = performance.now() / 1000;
 let time = 0;
 let running = true;
@@ -161,7 +181,7 @@ function frame(now) {
 
   const t0 = now / 1000;
   const rawDt = t0 - last;
-  // Clamped so a stalled tab or a breakpoint cannot detonate the simulation.
+  // Clamped so a stalled tab or a breakpoint cannot detonate the animation.
   // The meters and the quality governor must see the real number, though —
   // feeding them the clamp makes the HUD incapable of reporting below 20 fps.
   const dt = Math.min(rawDt, 1 / 20);
@@ -172,31 +192,24 @@ function frame(now) {
   const t = tl.value;
 
   rig.update(t, time, reduced ? 0 : tl.velocity, reduced ? 0 : 1);
-  nebula.update(time, t, rig.camera, dpr);
+  lineup.update(time, rig.camera);
 
-  // Each station only pays for itself while it is anywhere near the lens.
-  const clothLive = window4(t, 0.06, 0.20, 0.44, 0.56);
-  if (clothLive > 0.001) {
-    cloth.mesh.visible = true;
-    if (!reduced) cloth.update(dt, time, Math.min(Math.abs(tl.velocity) * 1.6, 0.9));
-  } else {
-    cloth.mesh.visible = false;
+  let nearest = lineup.items[0];
+  for (const item of lineup.items) {
+    if (Math.abs(rig.camera.position.z - item.position.z) <
+        Math.abs(rig.camera.position.z - nearest.position.z)) {
+      nearest = item;
+    }
   }
+  accent.lerp(nearest.accentVec, 1 - Math.pow(0.02, Math.min(dt, 0.05)));
 
-  const fieldLive = window4(t, 0.32, 0.48, 0.72, 0.86);
-  field.mesh.visible = fieldLive > 0.001;
-  if (field.mesh.visible) field.update(time, fieldLive);
+  nebula.update(time, t, rig.camera, dpr, accent);
 
-  const monoLive = band(t, 0.60, 0.80);
-  monolith.group.visible = monoLive > 0.001;
-  if (monolith.group.visible) monolith.update(time, monoLive);
-
-  // Grade moves with the story: cold and clean at the top, hot and blown out
-  // by the time the monolith fills the frame.
-  post.compU.uBloomAmount.value = 0.42 + band(t, 0.55, 1.0) * 0.26;
-  post.compU.uExposure.value = 1.0 + band(t, 0.4, 1.0) * 0.06;
-  post.compU.uAberration.value = 0.0022 + Math.min(Math.abs(tl.velocity) * 0.02, 0.006);
-  post.compU.uVignette.value = 0.62 - band(t, 0.7, 1.0) * 0.16;
+  // Grade drifts across the sequence: cool and clinical at the grey end of the
+  // lineup, warmer as it reaches the present.
+  post.compU.uBloomAmount.value = 0.40 + t * 0.20;
+  post.compU.uAberration.value = 0.0018 + Math.min(Math.abs(tl.velocity) * 0.02, 0.005);
+  post.compU.uVignette.value = 0.58 - t * 0.08;
 
   renderer.info.reset();
   post.render(scene, rig.camera, time);

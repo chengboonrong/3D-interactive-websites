@@ -28,9 +28,6 @@ export function detectTier() {
     dprCap: low ? 1.5 : 1.75,
     dprFloor: low ? 0.6 : 0.75,
     dust: low ? 1100 : 2600,
-    shards: low ? 2000 : 4096,
-    clothSegments: low ? 30 : 40,
-    clothIterations: low ? 6 : 8,
     bloomPasses: low ? 2 : 3,
   };
 }

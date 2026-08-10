@@ -37,6 +37,7 @@ uniform float uProgress;
 uniform vec3 uColdA;
 uniform vec3 uColdB;
 uniform vec3 uWarm;
+uniform vec3 uAccent;
 varying vec3 vDir;
 
 void main(){
@@ -54,24 +55,29 @@ void main(){
   float density = far * 0.62 + near * 0.38;
   // A tighter window leaves real black between the filaments. Without it the
   // frame is wall-to-wall cloud and nothing reads as foreground.
-  density = smoothstep(-0.04, 0.88, density);
+  density = smoothstep(0.16, 0.98, density);
 
-  // The grade rotates through the scroll: cold void -> warm interior.
-  float mixWarm = smoothstep(0.40, 1.0, uProgress);
-  vec3 cold = mix(uColdA, uColdB, density);
+  // Retained only as a faint warm lift toward the end of the lineup.
+  float mixWarm = smoothstep(0.55, 1.0, uProgress) * 0.4;
+  // The backdrop takes its hue from whichever console is currently the
+  // subject, so the room changes colour as the lineup moves through the eras.
+  vec3 cold = mix(uColdA, mix(uColdB, uAccent, 0.35), density);
   vec3 col = mix(cold, uWarm, mixWarm * density * 0.42);
 
-  // Filaments: the ridge of the noise field, boosted so bloom can grab it.
+  // Filaments: the ridge of the noise field. Tinted by the current console's
+  // accent and kept faint — this backdrop is a room, not the subject. The
+  // multiplier here was 2.2 when the page was about the sky itself, and at that
+  // strength a light grey console had no edges left against it.
   float ridge = 1.0 - abs(near * 2.0 - 0.35);
-  // Deliberately a two-tone ramp (teal -> amber) rather than a full palette
-  // sweep. Rainbow filaments read as a screensaver; two hues read as a grade.
-  vec3 filament = mix(vec3(0.10, 0.34, 0.52), vec3(0.95, 0.52, 0.16), mixWarm * 0.7 + density * 0.3);
-  // The cold palette has far less base luminance than the warm one, so the
-  // filaments have to carry more of the exposure at the start of the page.
-  col += filament * pow(max(ridge, 0.0), 8.0) * mix(2.2, 1.2, mixWarm);
+  vec3 filament = mix(vec3(0.14, 0.26, 0.40), uAccent, 0.5);
+  col += filament * pow(max(ridge, 0.0), 8.0) * 0.30;
 
   // Horizon lift so the lower hemisphere never reads as flat black.
-  col += uColdA * 0.22 * smoothstep(0.55, -0.35, d.y);
+  col += uColdA * 0.14 * smoothstep(0.55, -0.35, d.y);
+
+  // Held well down. The first pass at this had a bright cyan nebula directly
+  // behind a light grey console and the product lost every edge it had.
+  col *= 0.40;
 
   gl_FragColor = vec4(col, 1.0);
 }
@@ -129,6 +135,7 @@ export function createNebula({ dust: dustCount = 2600 } = {}) {
         uColdA: { value: new Color(0.020, 0.030, 0.058) },
         uColdB: { value: new Color(0.16, 0.22, 0.40) },
         uWarm: { value: new Color(0.30, 0.17, 0.06) },
+        uAccent: { value: new Color(0.10, 0.13, 0.26) },
       },
     })
   );
@@ -145,7 +152,7 @@ export function createNebula({ dust: dustCount = 2600 } = {}) {
     // Spread along the flight path so there is always dust near the lens.
     pos[i * 3] = (Math.random() - 0.5) * 90;
     pos[i * 3 + 1] = (Math.random() - 0.5) * 55;
-    pos[i * 3 + 2] = 14 - Math.random() * 160;
+    pos[i * 3 + 2] = 20 - Math.random() * 230;
     size[i] = 0.7 + Math.random() * 2.6;
     seed[i] = Math.random();
   }
@@ -175,9 +182,10 @@ export function createNebula({ dust: dustCount = 2600 } = {}) {
   return {
     sky,
     dust,
-    update(time, progress, camera, dpr) {
+    update(time, progress, camera, dpr, accent) {
       sky.material.uniforms.uTime.value = time;
       sky.material.uniforms.uProgress.value = progress;
+      if (accent) sky.material.uniforms.uAccent.value.setRGB(accent.x, accent.y, accent.z);
       sky.position.copy(camera.position);
       dust.material.uniforms.uTime.value = time;
       dust.material.uniforms.uPixelRatio.value = dpr;
