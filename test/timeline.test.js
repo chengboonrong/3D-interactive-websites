@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { band, window4 } from '../src/scroll.js';
+import { band, panelOpacity } from '../src/scroll.js';
 import { stationTimes } from '../src/rig.js';
 import { CONSOLES } from '../src/objects/consoles.js';
 
@@ -28,12 +28,38 @@ test('band is monotonic', () => {
   }
 });
 
-test('window4 is zero outside and one across the plateau', () => {
-  assert.equal(window4(0.0, 0.2, 0.3, 0.7, 0.8), 0);
-  assert.equal(window4(0.2, 0.2, 0.3, 0.7, 0.8), 0);
-  assert.equal(window4(0.5, 0.2, 0.3, 0.7, 0.8), 1);
-  assert.equal(window4(0.8, 0.2, 0.3, 0.7, 0.8), 0);
-  assert.equal(window4(1.0, 0.2, 0.3, 0.7, 0.8), 0);
+test('band treats a zero-width range as a step rather than dividing by zero', () => {
+  // NaN here would travel straight into an opacity and blank a panel silently.
+  assert.equal(band(0.4, 0.5, 0.5), 0);
+  assert.equal(band(0.5, 0.5, 0.5), 1);
+  assert.equal(band(0.6, 0.5, 0.5), 1);
+});
+
+test('a panel reaches full opacity in the middle of its window', () => {
+  assert.ok(Math.abs(panelOpacity(0.5, 0.45, 0.55) - 1) < 1e-9);
+  assert.equal(panelOpacity(0.2, 0.45, 0.55), 0);
+  assert.equal(panelOpacity(0.8, 0.45, 0.55), 0);
+});
+
+test('a panel pinned to the start of the timeline is fully open at t=0', () => {
+  // There is no room before t=0 to fade in. A symmetric window puts half the
+  // ramp off the end of the timeline and caps the opening title at ~74%.
+  assert.equal(panelOpacity(0, 0, 0.075), 1);
+  assert.ok(panelOpacity(0.2, 0, 0.075) < 0.01, 'it should still fade out');
+});
+
+test('a panel pinned to the end of the timeline is fully open at t=1', () => {
+  assert.equal(panelOpacity(1, 0.93, 1), 1);
+  assert.ok(panelOpacity(0.8, 0.93, 1) < 0.01, 'it should still fade in');
+});
+
+test('panel opacity never leaves 0..1', () => {
+  for (const [a, b] of [[0, 0.075], [0.45, 0.55], [0.93, 1], [0, 1]]) {
+    for (let i = -10; i <= 110; i++) {
+      const v = panelOpacity(i / 100, a, b);
+      assert.ok(v >= 0 && v <= 1 && Number.isFinite(v), `panelOpacity(${i / 100}, ${a}, ${b}) = ${v}`);
+    }
+  }
 });
 
 test('stationTimes returns one strictly increasing time per machine', () => {

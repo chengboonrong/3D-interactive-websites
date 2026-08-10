@@ -212,7 +212,7 @@ a system Chromium path when it finds one.
 src/
   main.js              frame loop, panel timing, adaptive DPR
   rig.js               camera + aim splines, aspect framing
-  scroll.js            scroll → smoothed timeline + velocity
+  scroll.js            scroll → smoothed timeline, velocity, panel easing
   ui.js                copy panels, progress rail, HUD
   tier.js              one boot-time quality decision
   gfx/post.js          bright pass, blur, composite

@@ -107,7 +107,9 @@ addEventListener('load', () => {
 // Start conservative and let the frame timer earn the pixels back. Phones
 // report a device pixel ratio of 3 and cannot afford to honour it here — the
 // sky shader is fill-rate bound, so the cap is where most of the budget is won.
-const dprCap = Math.min(devicePixelRatio || 1, tier.dprCap);
+// Read live rather than frozen at boot: dragging the window to a display with a
+// different pixel density, or zooming, changes devicePixelRatio underneath us.
+const dprCap = () => Math.min(devicePixelRatio || 1, tier.dprCap);
 let dpr = Math.min(devicePixelRatio || 1, tier.dprStart);
 let width = 0;
 let height = 0;
@@ -118,6 +120,7 @@ function resize() {
   // so its box is stable while the mobile URL bar slides over it.
   const w = canvas.clientWidth || innerWidth;
   const h = canvas.clientHeight || innerHeight;
+  if (dpr > dprCap()) dpr = dprCap();
   if (w === width && h === height && dpr === appliedDpr) return;
 
   width = w;
@@ -134,7 +137,18 @@ addEventListener('resize', resize, { passive: true });
 // iOS reports the pre-rotation viewport on the orientationchange event itself,
 // so the follow-up resize is what actually has the right numbers. Re-running it
 // on the next frame covers the browsers that do not fire one.
-addEventListener('orientationchange', () => requestAnimationFrame(resize), { passive: true });
+addEventListener(
+  'orientationchange',
+  () =>
+    requestAnimationFrame(() => {
+      resize();
+      // The track is sized in vh, so rotating changes the document height. The
+      // timeline caches that height and only refreshes it on 'resize', which
+      // is the event this handler exists because some browsers do not fire.
+      timeline.remeasure();
+    }),
+  { passive: true }
+);
 resize();
 
 /* ── Adaptive quality ────────────────────────────────────────────────────── */
@@ -157,8 +171,8 @@ function adapt(dt) {
     dpr = Math.max(tier.dprFloor, dpr - 0.15);
     slowFrames = 0;
     resize();
-  } else if (fastFrames > 240 && dpr < dprCap) {
-    dpr = Math.min(dprCap, dpr + 0.1);
+  } else if (fastFrames > 240 && dpr < dprCap()) {
+    dpr = Math.min(dprCap(), dpr + 0.1);
     fastFrames = 0;
     resize();
   }
