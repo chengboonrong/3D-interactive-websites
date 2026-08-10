@@ -63,9 +63,22 @@ Wii, Wii U, Game Boy, Nintendo DS, Nintendo 3DS and Nintendo Switch are
 trademarks of Nintendo. This is an unofficial
 rendering exercise with no affiliation.
 
-The sales figures in the copy are the widely published lifetime numbers and are
-worth checking against Nintendo's own consolidated sales data before this goes
-anywhere public.
+### Sales figures
+
+Taken from Nintendo's consolidated hardware sales data. Where a machine is a
+revision — Game Boy Color, Game Boy Advance SP, DS Lite, New 3DS — Nintendo
+reports it inside its family total rather than separately, and the copy says so
+instead of inventing a per-SKU number.
+
+These are a **snapshot**. Nintendo republishes them every quarter, and the two
+current machines move: the Switch and the Switch 2 figures here will be stale
+within months. The rest are final. If this is ever published, put an "as of"
+date next to them.
+
+One claim in the copy depends on the numbers rather than restating them: the
+Wii U is described as the fewest-selling Nintendo home console, which is true of
+everything in Nintendo's table but excludes the Virtual Boy, which Nintendo does
+not list there.
 
 ## How it is built
 
