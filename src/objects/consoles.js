@@ -269,6 +269,197 @@ function nintendoSwitch2() {
   return { group: g, radius: 3.8 };
 }
 
+/* ── Handhelds ────────────────────────────────────────────────────────────── */
+
+/**
+ * These are genuinely small — a Game Boy is 90 mm across, a fifth of the width
+ * of a Nintendo 64 — and the scene keeps them at true scale. Rather than cheat
+ * the models, each carries a `view` factor and the camera simply steps closer.
+ */
+
+/** Cross-shaped d-pad, facing +Z. */
+function dpad(g, material, [x, y, z], size = 0.62, arm = 0.2, depth = 0.09) {
+  part(g, slab(size, arm, depth, 0.04), material, [x, y, z]);
+  part(g, slab(arm, size, depth, 0.04), material, [x, y, z]);
+}
+
+/** Two face buttons on the diagonal, the way every Game Boy laid them out. */
+function abButtons(g, material, [x, y, z], r = 0.15) {
+  part(g, disc(r, 0.1, 12), material, [x, y, z], [Math.PI / 2, 0, 0]);
+  part(g, disc(r, 0.1, 12), material, [x + r * 1.9, y + r * 1.15, z], [Math.PI / 2, 0, 0]);
+}
+
+/* ── 1989 · Game Boy ──────────────────────────────────────────────────────── */
+
+function gameBoy() {
+  const g = new Group();
+  const body = plastic('#d1cfc4', { rough: 0.55 });
+  const bezel = plastic('#4b4b52', { rough: 0.5 });
+  const dark = plastic('#33333a', { rough: 0.55 });
+  const magenta = plastic('#8e1f5c', { rough: 0.4 });
+  const grey = plastic('#8d8d86', { rough: 0.5 });
+
+  // 90 x 148 x 32 mm, stood upright.
+  const cy = 1.85;
+  part(g, slab(2.25, 3.7, 0.8, 0.18), body, [0, cy, 0]);
+
+  // The recessed screen surround and its famous olive LCD.
+  part(g, slab(1.66, 1.46, 0.08, 0.1), bezel, [0, cy + 0.87, 0.4]);
+  part(g, slab(1.18, 1.06, 0.03, 0.03), screen('#c2d84b', '#6d8b12'), [0, cy + 0.87, 0.44]);
+
+  dpad(g, dark, [-0.6, cy - 0.5, 0.42]);
+  abButtons(g, magenta, [0.5, cy - 0.62, 0.42]);
+
+  // Start and select, angled, below the middle.
+  for (const dx of [-0.2, 0.2]) {
+    part(g, slab(0.42, 0.14, 0.08, 0.06), grey, [dx, cy - 1.18, 0.42], [0, 0, -0.32]);
+  }
+
+  // Speaker grille, bottom right, on the diagonal.
+  for (let i = 0; i < 6; i++) {
+    part(g, disc(0.045, 0.05, 8), bezel,
+      [0.42 + (i % 3) * 0.16, cy - 1.5 + Math.floor(i / 3) * 0.16, 0.41], [Math.PI / 2, 0, 0]);
+  }
+
+  return { group: g, radius: 1.6 };
+}
+
+/* ── 1998 · Game Boy Color ────────────────────────────────────────────────── */
+
+function gameBoyColor() {
+  const g = new Group();
+  const body = plastic('#6b4fa3', { rough: 0.32 });
+  const bezel = plastic('#2c2c33', { rough: 0.5 });
+  const dark = plastic('#26262c', { rough: 0.55 });
+  const buttons = plastic('#3a3a44', { rough: 0.4 });
+
+  // 78 x 133 x 27 mm — narrower and squarer than the original.
+  const cy = 1.67;
+  part(g, slab(1.95, 3.33, 0.68, 0.24), body, [0, cy, 0]);
+
+  part(g, slab(1.54, 1.36, 0.07, 0.1), bezel, [0, cy + 0.76, 0.34]);
+  part(g, slab(1.26, 1.12, 0.03, 0.03), screen('#9fe3ff', '#1d4c7a'), [0, cy + 0.76, 0.38]);
+
+  // Round d-pad cradle, which is what actually changed on the face.
+  part(g, disc(0.32, 0.06, 16), bezel, [-0.46, cy - 0.5, 0.35], [Math.PI / 2, 0, 0]);
+  dpad(g, dark, [-0.46, cy - 0.5, 0.4], 0.48, 0.16, 0.07);
+  abButtons(g, buttons, [0.4, cy - 0.62, 0.36], 0.14);
+
+  for (const dx of [-0.16, 0.16]) {
+    part(g, slab(0.36, 0.12, 0.07, 0.05), buttons, [dx, cy - 1.1, 0.36], [0, 0, -0.3]);
+  }
+
+  return { group: g, radius: 1.5 };
+}
+
+/* ── 2001 · Game Boy Advance ──────────────────────────────────────────────── */
+
+function gameBoyAdvance() {
+  const g = new Group();
+  const body = plastic('#464b96', { rough: 0.34 });
+  const bezel = plastic('#22222a', { rough: 0.5 });
+  const dark = plastic('#26262e', { rough: 0.55 });
+
+  // 144 x 82 x 24 mm — the first one you held sideways.
+  const face = new Group();
+  face.position.y = 1.25;
+  face.rotation.x = -0.3;
+
+  part(face, slab(3.6, 2.05, 0.6, 0.55), body);
+  part(face, slab(2.0, 1.46, 0.06, 0.08), bezel, [0, 0.06, 0.31]);
+  part(face, slab(1.76, 1.26, 0.03, 0.03), screen('#a5e7ff', '#1c4468'), [0, 0.06, 0.34]);
+
+  dpad(face, dark, [-1.26, -0.06, 0.32], 0.56, 0.18, 0.08);
+  abButtons(face, plastic('#3b3f7e', { rough: 0.4 }), [1.18, -0.16, 0.32], 0.16);
+
+  // Shoulder buttons, wrapped over the top edge.
+  for (const x of [-1.5, 1.5]) {
+    part(face, slab(0.62, 0.22, 0.3, 0.1), body, [x, 1.0, -0.1]);
+  }
+  g.add(face);
+
+  return { group: g, radius: 2.1 };
+}
+
+/* ── Clamshells ───────────────────────────────────────────────────────────── */
+
+/**
+ * The DS and the 3DS are the same hinge at two sizes. The lid opens to about
+ * twenty degrees past vertical, which is roughly where people actually hold
+ * them and the angle at which both screens are visible at once.
+ */
+function clamshell({ width, depth, thickness, shell, topScreen, bottomScreen, extras }) {
+  const g = new Group();
+  const body = plastic(shell, { rough: 0.34 });
+  const dark = plastic('#1c1c22', { rough: 0.5 });
+
+  // Base, lying flat.
+  part(g, slab(width, depth, thickness, 0.18), body, [0, thickness / 2, 0], LIE);
+  part(g, slab(bottomScreen[0], bottomScreen[1], 0.03, 0.04), dark,
+    [0, thickness + 0.01, 0.12], LIE);
+  part(g, slab(bottomScreen[0] - 0.12, bottomScreen[1] - 0.12, 0.02, 0.03),
+    screen('#cfe9ff', '#25506f'), [0, thickness + 0.03, 0.12], LIE);
+
+  // Lid, hinged along the back edge.
+  const lid = new Group();
+  lid.position.set(0, thickness, -depth / 2 + 0.1);
+  lid.rotation.x = -0.34;
+  part(lid, slab(width, depth, thickness, 0.18), body, [0, depth / 2, 0]);
+  part(lid, slab(topScreen[0], topScreen[1], 0.03, 0.04), dark, [0, depth / 2, thickness / 2 + 0.02]);
+  part(lid, slab(topScreen[0] - 0.12, topScreen[1] - 0.12, 0.02, 0.03),
+    screen('#bfe4ff', '#1d4467'), [0, depth / 2, thickness / 2 + 0.04]);
+  g.add(lid);
+
+  if (extras) extras(g, { body, dark, thickness, width, depth });
+  return g;
+}
+
+/* ── 2004 · Nintendo DS ───────────────────────────────────────────────────── */
+
+function nintendoDS() {
+  const g = clamshell({
+    width: 3.7,
+    depth: 2.1,
+    thickness: 0.35,
+    shell: '#b7bac0',
+    topScreen: [1.95, 1.48],
+    bottomScreen: [1.95, 1.48],
+    extras: (g, { dark, thickness }) => {
+      dpad(g, dark, [-1.35, thickness + 0.04, 0.35], 0.42, 0.14, 0.06);
+      // Four face buttons, laid out as a diamond.
+      for (const [dx, dz] of [[0, -0.2], [0, 0.2], [-0.2, 0], [0.2, 0]]) {
+        part(g, disc(0.09, 0.07, 10), dark, [1.35 + dx, thickness + 0.05, 0.35 + dz]);
+      }
+    },
+  });
+  return { group: g, radius: 2.2 };
+}
+
+/* ── 2011 · Nintendo 3DS ──────────────────────────────────────────────────── */
+
+function nintendo3DS() {
+  const g = clamshell({
+    width: 3.35,
+    depth: 1.85,
+    thickness: 0.32,
+    shell: '#2a7fb8',
+    // The top screen went widescreen for the stereoscopic effect; the bottom
+    // stayed 4:3.
+    topScreen: [2.55, 1.05],
+    bottomScreen: [1.6, 1.22],
+    extras: (g, { dark, thickness }) => {
+      // Circle Pad above the d-pad — the addition that defined this one.
+      part(g, disc(0.19, 0.09, 14), plastic('#d8dae0', { rough: 0.45 }),
+        [-1.2, thickness + 0.05, -0.12]);
+      dpad(g, dark, [-1.2, thickness + 0.04, 0.42], 0.34, 0.12, 0.05);
+      for (const [dx, dz] of [[0, -0.18], [0, 0.18], [-0.18, 0], [0.18, 0]]) {
+        part(g, disc(0.08, 0.07, 10), dark, [1.2 + dx, thickness + 0.05, 0.2 + dz]);
+      }
+    },
+  });
+  return { group: g, radius: 2.0 };
+}
+
 /* ── The lineup ───────────────────────────────────────────────────────────── */
 
 const GLOW_FRAG = /* glsl */ `
@@ -318,13 +509,27 @@ function hexToVec(hex) {
  * pool of light under each console and as the tint the sky takes on while that
  * console is the subject.
  */
+/**
+ * Chronological, both product lines interleaved — which is the story: two
+ * separate families running in parallel for twenty-eight years, and then the
+ * Switch collapsing them into one.
+ *
+ *   aimY    where the lens points, roughly the visual centre of the object
+ *   view    how close the camera steps, as a fraction of the standard aisle.
+ *           A Game Boy is a fifth the width of a Nintendo 64 and the scene
+ *           keeps true scale, so the camera moves instead of the model.
+ *   offsetX how far the object stands back from the aisle, for the wide ones
+ */
 export const CONSOLES = [
-  // aimY is where the lens points: roughly the visual centre of each object,
-  // which differs a lot between a flat grey box and a tablet in a dock.
+  { id: 'gb', build: gameBoy, accent: '#b7c86a', year: 1989, aimY: 1.9, view: 0.68 },
   { id: 'sfc', build: superFamicom, accent: '#9b8fd4', year: 1990, aimY: 1.2 },
   { id: 'n64', build: nintendo64, accent: '#4fa3d1', year: 1996, aimY: 1.1 },
+  { id: 'gbc', build: gameBoyColor, accent: '#a071e0', year: 1998, aimY: 1.7, view: 0.66 },
+  { id: 'gba', build: gameBoyAdvance, accent: '#6f77d8', year: 2001, aimY: 1.25, view: 0.72 },
   { id: 'gcn', build: gameCube, accent: '#7a76d8', year: 2001, aimY: 1.5 },
+  { id: 'ds', build: nintendoDS, accent: '#9fb4c8', year: 2004, aimY: 1.15, view: 0.72 },
   { id: 'wii', build: wii, accent: '#7fd4ff', year: 2006, aimY: 2.1 },
+  { id: '3ds', build: nintendo3DS, accent: '#46b0e8', year: 2011, aimY: 1.05, view: 0.7 },
   // The Wii U is two objects side by side and much wider than the rest, so it
   // stands further back from the aisle to frame at the same size.
   { id: 'wiiu', build: wiiU, accent: '#63b8ff', year: 2012, aimY: 1.4, offsetX: 3.4 },

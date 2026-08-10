@@ -41,8 +41,13 @@ function roundedRect(w, h, r) {
 
 /**
  * A slab with rounded corners in XY and a chamfer on both faces, centred on
- * the origin. `d` is the finished depth including the chamfer, so callers can
- * think in outside dimensions.
+ * the origin. `w`, `h` and `d` are the finished outside dimensions — the
+ * chamfer is inset from them, not added to them.
+ *
+ * Exact to floating point at ordinary corner radii. At radii approaching half
+ * the shorter side the outline becomes a stadium, and offsetting a coarsely
+ * tessellated curve outward for the chamfer overshoots the box by around a
+ * tenth of a percent. Not worth more curve segments for a 2 mm handle.
  */
 export function slab(w, h, d, r = 0.12, bevel = 0.05) {
   const b = Math.min(bevel, d / 2 - 0.001, w / 4, h / 4);
@@ -59,19 +64,32 @@ export function slab(w, h, d, r = 0.12, bevel = 0.05) {
   return g;
 }
 
-/** A rounded rectangular loop — the GameCube handle, and nothing else. */
-export function loop(w, h, thickness, d, r = 0.2) {
-  const outer = roundedRect(w, h, r);
-  outer.holes.push(roundedRect(w - thickness * 2, h - thickness * 2, Math.max(0.01, r - thickness)));
+/**
+ * A rounded rectangular loop — the GameCube handle, and nothing else.
+ *
+ * Like slab(), the chamfer is inset from the requested size rather than added
+ * to it, so w/h/d are the finished outside dimensions. The first version added
+ * it, which made every loop 2 x bevel larger than asked for.
+ */
+export function loop(w, h, thickness, d, r = 0.2, bevel = 0.03) {
+  const b = Math.min(bevel, d / 2 - 0.001, thickness / 3);
+  const outer = roundedRect(w - b * 2, h - b * 2, Math.max(0.01, r - b));
+  outer.holes.push(
+    roundedRect(
+      w - b * 2 - thickness * 2,
+      h - b * 2 - thickness * 2,
+      Math.max(0.01, r - thickness)
+    )
+  );
   const g = new ExtrudeGeometry(outer, {
-    depth: d,
+    depth: Math.max(0.001, d - b * 2),
     bevelEnabled: true,
-    bevelSize: 0.03,
-    bevelThickness: 0.03,
+    bevelSize: b,
+    bevelThickness: b,
     bevelSegments: 1,
     curveSegments: 6,
   });
-  g.translate(0, 0, -d / 2);
+  g.translate(0, 0, -(d / 2 - b));
   g.computeVertexNormals();
   return g;
 }
@@ -82,7 +100,16 @@ export function disc(radius, height, segments = 20) {
 
 /* ── Material ─────────────────────────────────────────────────────────────── */
 
-const ENV = envTexture(1024, 512);
+/**
+ * Built on first use rather than at import. Nothing needs it until a material
+ * exists, and deferring it keeps this module importable without a DOM — which
+ * is what lets the geometry helpers be unit tested outside a browser.
+ */
+let ENV = null;
+function environment() {
+  if (!ENV) ENV = envTexture(1024, 512);
+  return ENV;
+}
 
 const VERT = /* glsl */ `
 varying vec3 vWorld;
@@ -190,7 +217,6 @@ void main(){
 `;
 
 const shared = {
-  uEnv: { value: ENV },
   uKey: { value: new Vector3(1.15, 1.06, 0.92) },
   uAmbient: { value: new Vector3(0.20, 0.23, 0.30) },
   uLightDir: { value: new Vector3(-0.42, 0.78, 0.55).normalize() },
@@ -211,6 +237,7 @@ export function plastic(hex, { rough = 0.35, metal = 0 } = {}) {
       fragmentShader: FRAG,
       uniforms: {
         ...shared,
+        uEnv: { value: environment() },
         uColor: { value: srgb(hex) },
         uRough: { value: rough },
         uMetal: { value: metal },

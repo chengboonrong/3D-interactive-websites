@@ -6,10 +6,13 @@
  * them apart. Width is only one of the signals, and the adaptive DPR governor
  * in main.js still corrects whatever this gets wrong.
  */
-export function detectTier() {
-  const shortEdge = Math.min(innerWidth, innerHeight);
-  const cores = navigator.hardwareConcurrency || 4;
-  const coarse = matchMedia('(pointer: coarse)').matches;
+export function detectTier(probe = {}) {
+  // The three signals are injectable so the decision can be tested for both
+  // tiers without a browser, and without depending on the core count of
+  // whatever machine happens to be running the suite.
+  const shortEdge = probe.shortEdge ?? Math.min(innerWidth, innerHeight);
+  const cores = probe.cores ?? navigator.hardwareConcurrency ?? 4;
+  const coarse = probe.coarse ?? matchMedia('(pointer: coarse)').matches;
 
   // Touch plus a small-ish short edge is a phone or a tablet, and both want the
   // cheaper scene. A mouse means a real machine however narrow the window is.

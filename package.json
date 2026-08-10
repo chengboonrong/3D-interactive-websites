@@ -8,7 +8,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview --port 4173",
-    "size": "node scripts/size-report.mjs"
+    "size": "node scripts/size-report.mjs",
+    "test": "node --test \"test/**/*.test.js\""
   },
   "dependencies": {
     "three": "^0.185.1"

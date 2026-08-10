@@ -48,7 +48,14 @@ scene.add(nebula.sky, nebula.dust, lineup.root);
 // actually in front of that console, sampled from the curve. Hand-typed windows
 // drift the moment the path or the spacing changes; these cannot.
 const stations = stationTimes();
-const HALF = 0.038;
+
+// The window has to be derived from the station spacing, not fixed. At seven
+// stations a fixed 0.038 was comfortable; at twelve the spacing fell to 0.067
+// and neighbouring captions sat on top of each other. ui.js adds a fade of 35%
+// of the window on each side, so a window of 0.30x the spacing leaves the fades
+// just touching and never two captions at full opacity.
+const spacing = stations.length > 1 ? stations[1] - stations[0] : 0.12;
+const HALF = spacing * 0.30;
 
 for (const el of document.querySelectorAll('.panel[data-station]')) {
   const t = stations[Number(el.dataset.station)];
@@ -65,6 +72,19 @@ intro.dataset.out = Math.max(0.02, stations[0] - HALF - 0.02).toFixed(4);
 const outro = document.querySelector('footer.panel');
 outro.dataset.in = Math.min(0.97, stations[stations.length - 1] + HALF + 0.02).toFixed(4);
 outro.dataset.out = '1';
+
+// The scroll track has to grow with the lineup, or twelve stations go past in
+// the distance that used to carry four. Bounded in pixels at both ends so a
+// short landscape phone still gets a usable throw and a tall monitor does not
+// turn the page into a marathon.
+const track = document.getElementById('scroll');
+track.style.height =
+  `clamp(${stations.length * 480}px, ${(stations.length + 2) * 105}vh, ${stations.length * 1050}px)`;
+
+// The timeline cached the document height when it was constructed, which was
+// before this line ran. Without telling it, every scroll position maps to the
+// wrong t and no station ever lands in front of the lens.
+timeline.remeasure();
 
 const ui = createUI();
 

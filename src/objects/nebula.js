@@ -75,9 +75,15 @@ void main(){
   // Horizon lift so the lower hemisphere never reads as flat black.
   col += uColdA * 0.14 * smoothstep(0.55, -0.35, d.y);
 
+  // And a plain vertical gradient underneath everything. The noise field is
+  // not uniformly dense, and the opening shot — the one frame with no console
+  // in it to carry the composition — happened to look down a sparse direction
+  // and came out almost entirely black.
+  col += mix(uColdB, uAccent, 0.3) * 0.16 * (0.35 + 0.65 * smoothstep(-0.6, 0.8, d.y));
+
   // Held well down. The first pass at this had a bright cyan nebula directly
   // behind a light grey console and the product lost every edge it had.
-  col *= 0.40;
+  col *= 0.52;
 
   gl_FragColor = vec4(col, 1.0);
 }
@@ -132,7 +138,7 @@ export function createNebula({ dust: dustCount = 2600 } = {}) {
       uniforms: {
         uTime: { value: 0 },
         uProgress: { value: 0 },
-        uColdA: { value: new Color(0.020, 0.030, 0.058) },
+        uColdA: { value: new Color(0.045, 0.058, 0.10) },
         uColdB: { value: new Color(0.16, 0.22, 0.40) },
         uWarm: { value: new Color(0.30, 0.17, 0.06) },
         uAccent: { value: new Color(0.10, 0.13, 0.26) },
