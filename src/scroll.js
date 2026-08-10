@@ -47,13 +47,32 @@ export function createTimeline() {
   };
 }
 
-/** Maps t into 0..1 across [a,b] with smoothstep easing at both ends. */
+/**
+ * Maps t into 0..1 across [a,b] with smoothstep easing at both ends. Used by
+ * panelOpacity below; exported because it is the one piece of easing worth
+ * testing directly.
+ */
 export function band(t, a, b) {
+  // A zero-width range would divide by zero and hand back NaN, which then
+  // travels silently into an opacity or a uniform. Treat it as a hard step.
+  if (a === b) return t >= b ? 1 : 0;
   const x = Math.min(1, Math.max(0, (t - a) / (b - a)));
   return x * x * (3 - 2 * x);
 }
 
-/** 0 outside [a,d], ramping up over [a,b] and back down over [c,d]. */
-export function window4(t, a, b, c, d) {
-  return band(t, a, b) * (1 - band(t, c, d));
+/**
+ * Opacity for a copy panel occupying [inT, outT] of the timeline.
+ *
+ * The ends are special. A panel pinned to t=0 has no room before it to fade in,
+ * and one pinned to t=1 has none after it to fade out — feeding those to a
+ * symmetric window puts the ramp half outside the timeline and the panel can
+ * only ever reach about 74% opacity. The opening title and the closing card
+ * were both dimmed that way, which is subtle enough to read as a design choice
+ * rather than a bug.
+ */
+export function panelOpacity(t, inT, outT) {
+  const fade = (outT - inT) * 0.35;
+  const rise = inT <= 0 ? 1 : band(t, inT - fade, inT + fade * 0.5);
+  const fall = outT >= 1 ? 0 : band(t, outT - fade * 0.5, outT + fade);
+  return rise * (1 - fall);
 }

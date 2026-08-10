@@ -1,4 +1,4 @@
-import { window4 } from './scroll.js';
+import { panelOpacity } from './scroll.js';
 
 /**
  * Copy panels are driven by the same timeline as the camera, so type and
@@ -24,8 +24,7 @@ export function createUI() {
   return {
     update(t, dt, info) {
       for (const p of panels) {
-        const fadeIn = (p.out - p.in) * 0.35;
-        const a = window4(t, p.in - fadeIn, p.in + fadeIn * 0.5, p.out - fadeIn * 0.5, p.out + fadeIn);
+        const a = panelOpacity(t, p.in, p.out);
         if (Math.abs(a - p.last) < 0.002) continue;
         p.last = a;
         p.el.style.opacity = a.toFixed(3);
