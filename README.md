@@ -4,7 +4,7 @@ Twelve Nintendo machines, 1989 to 2025, modelled from primitives and rendered
 live in the browser as you scroll. No photographs, no downloaded textures, no
 video.
 
-**571 KB on disk / 152 KB gzipped** (125 KB brotli), of which three.js is the overwhelming
+**572 KB on disk / 152 KB gzipped** (126 KB brotli), of which three.js is the overwhelming
 majority. All twelve machines, the backdrop, the environment map and the film
 grade together add a handful of KB.
 
@@ -143,7 +143,32 @@ Also handled: `prefers-reduced-motion`, tab visibility, WebGL context loss and
 restore, iOS URL-bar resize thrash, and a text fallback when WebGL is
 unavailable.
 
-## Verifying it
+## Tests and CI
+
+```
+npm test        # node --test, no framework, no dependencies
+```
+
+The suite covers the parts that are provable without a GPU: the rounded-slab
+and loop builders measure their requested outside dimensions (including the
+degenerate cases — a slab thinner than its own chamfer, a corner radius larger
+than the slab), the scroll easing curves clamp and stay monotonic, the station
+times are evenly spaced with room at both ends for the intro and outro copy,
+the lineup is chronological, and the quality tier picks correctly for a phone,
+a tablet, a four-core laptop and a two-core machine.
+
+Two source changes exist for this: the environment map is built on first use
+rather than at import, so the geometry helpers can be imported outside a
+browser, and `detectTier()` takes its three signals as optional arguments so
+both tiers can be exercised without depending on the core count of whatever is
+running the suite.
+
+`.github/workflows/ci.yml` runs `npm test`, `npm run build` and `npm run size`
+on pull requests only. It sets `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` because
+Playwright is a dev dependency of the render check below, which needs a real
+browser and does not run in CI.
+
+## Verifying rendering
 
 `scripts/verify.mjs` drives headless Chromium through a list of scroll
 positions, waits for the smoothed timeline to converge *and* for real frames to
@@ -183,4 +208,8 @@ src/
 scripts/
   size-report.mjs      raw / gzip / brotli per file
   verify.mjs           headless render check
+test/
+  geometry.test.js     slab and loop dimensions, degenerate cases
+  timeline.test.js     easing curves, station spacing, lineup invariants
+  tier.test.js         quality tier decisions
 ```

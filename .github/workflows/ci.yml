@@ -1,0 +1,45 @@
+name: CI
+
+# Pull requests only, as asked. Nothing runs on pushes to main — the same
+# commits were already checked on the PR that introduced them.
+on:
+  pull_request:
+
+# Read-only. This job builds and tests; it has no reason to write anything.
+permissions:
+  contents: read
+
+# A new push to a PR supersedes the run in flight for it.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      # Playwright is a dev dependency used only by scripts/verify.mjs, which
+      # needs a real browser and does not run here. Without this, npm ci spends
+      # a couple of minutes downloading Chromium that nothing will open.
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Payload size
+        run: npm run size
