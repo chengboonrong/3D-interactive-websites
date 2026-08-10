@@ -127,7 +127,7 @@ void main(){
 }
 `;
 
-export function createNebula({ dust: dustCount = 2600 } = {}) {
+export function createNebula({ dust: dustCount = 2600, depth = 230 } = {}) {
   const sky = new Mesh(
     new IcosahedronGeometry(1, 5),
     new ShaderMaterial({
@@ -158,7 +158,8 @@ export function createNebula({ dust: dustCount = 2600 } = {}) {
     // Spread along the flight path so there is always dust near the lens.
     pos[i * 3] = (Math.random() - 0.5) * 90;
     pos[i * 3 + 1] = (Math.random() - 0.5) * 55;
-    pos[i * 3 + 2] = 20 - Math.random() * 230;
+    // Spread across the whole flight path, whatever length the lineup is.
+    pos[i * 3 + 2] = 20 - Math.random() * depth;
     size[i] = 0.7 + Math.random() * 2.6;
     seed[i] = Math.random();
   }

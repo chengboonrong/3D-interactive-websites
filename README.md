@@ -1,11 +1,11 @@
 # A history in plastic
 
-Twelve Nintendo machines, 1989 to 2025, modelled from primitives and rendered
+Fifteen Nintendo machines, 1989 to 2025, modelled from primitives and rendered
 live in the browser as you scroll. No photographs, no downloaded textures, no
 video.
 
-**572 KB on disk / 152 KB gzipped** (126 KB brotli), of which three.js is the overwhelming
-majority. All twelve machines, the backdrop, the environment map and the film
+**573 KB on disk / 152 KB gzipped** (126 KB brotli), of which three.js is the overwhelming
+majority. All fifteen machines, the backdrop, the environment map and the film
 grade together add a handful of KB.
 
 ```
@@ -17,7 +17,7 @@ npm run size      # per-file raw / gzip / brotli report
 
 ## What is on the page
 
-Twelve machines, chronological, both product lines interleaved — which is the
+Fifteen machines, chronological, both product lines interleaved — which is the
 story: two separate families running in parallel for twenty-eight years, and
 then the Switch collapsing them into one.
 
@@ -29,16 +29,20 @@ then the Switch collapsing them into one.
 | 04 | Game Boy Color | 1998 | 78 × 133 × 27 mm |
 | 05 | Game Boy Advance | 2001 | 144 × 82 × 24 mm |
 | 06 | GameCube | 2001 | 150 × 110 × 161 mm |
-| 07 | Nintendo DS | 2004 | 148 × 84 mm per half |
-| 08 | Wii | 2006 | 44 × 157 × 215 mm |
-| 09 | Nintendo 3DS | 2011 | 134 × 74 mm per half |
-| 10 | Wii U | 2012 | 172 × 46 × 269 mm, plus the GamePad |
-| 11 | Nintendo Switch | 2017 | 239 × 102 mm across the Joy-Con |
-| 12 | Nintendo Switch 2 | 2025 | 272 × 116 mm, in its dock |
+| 07 | Game Boy Advance SP | 2003 | 82 × 84.6 mm folded |
+| 08 | Nintendo DS | 2004 | 148 × 84 mm per half |
+| 09 | Nintendo DS Lite | 2006 | 133 × 73.9 mm per half |
+| 10 | Wii | 2006 | 44 × 157 × 215 mm |
+| 11 | Nintendo 3DS | 2011 | 134 × 74 mm per half |
+| 12 | Wii U | 2012 | 172 × 46 × 269 mm, plus the GamePad |
+| 13 | New Nintendo 3DS | 2014 | 142 × 80.6 mm per half |
+| 14 | Nintendo Switch | 2017 | 239 × 102 mm across the Joy-Con |
+| 15 | Nintendo Switch 2 | 2025 | 272 × 116 mm, in its dock |
 
 Everything is drawn at **one scale — 1 unit to 40 mm** — so the sizes are true
-against each other. A Game Boy really is a fifth the width of a Nintendo 64, and
-the Wii really is that slight beside it.
+against each other. A Game Boy really is a fifth the width of a Nintendo 64, the
+Wii really is that slight beside it, and the DS Lite really is that much
+smaller than the DS it replaced.
 
 Which creates a framing problem the models are not allowed to solve: a handheld
 at true scale is too small to read at the distance that suits a home console. So
@@ -78,7 +82,7 @@ anywhere public.
   down in exposure. It takes its hue from whichever console is currently the
   subject, so the room changes colour as the lineup moves through the eras.
 
-**One material for all twelve.** A half-Lambert plastic shader with an
+**One material for all fifteen.** A half-Lambert plastic shader with an
 equirectangular reflection, a Fresnel term and a metallic switch, cached by
 appearance so the whole lineup shares a handful of programs.
 
@@ -203,7 +207,7 @@ src/
   gen/textures.js      environment map, dither
   gen/noise.glsl.js    simplex + fbm chunk shared by every shader
   objects/kit.js       rounded slab / loop / cylinder, plastic material
-  objects/consoles.js  the twelve builders and the lineup
+  objects/consoles.js  the fifteen builders and the lineup
   objects/nebula.js    backdrop and dust
 scripts/
   size-report.mjs      raw / gzip / brotli per file
