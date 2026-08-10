@@ -1,0 +1,20 @@
+{
+  "name": "cinematic-threejs-scroll",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Video-grade motion without video: AI-directed visual assets reconstructed as a real-time Three.js scroll experience.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview --port 4173",
+    "size": "node scripts/size-report.mjs"
+  },
+  "dependencies": {
+    "three": "^0.185.1"
+  },
+  "devDependencies": {
+    "playwright": "^1.62.1",
+    "vite": "^7.1.5"
+  }
+}
