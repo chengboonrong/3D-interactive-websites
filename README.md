@@ -1,12 +1,12 @@
 # A history in plastic
 
-Seven Nintendo home consoles, 1990 to 2025, modelled from primitives and
-rendered live in the browser as you scroll. No photographs, no downloaded
-textures, no video.
+Twelve Nintendo machines, 1989 to 2025, modelled from primitives and rendered
+live in the browser as you scroll. No photographs, no downloaded textures, no
+video.
 
-**566 KB on disk / 150 KB gzipped** (124 KB brotli), of which three.js is the overwhelming
-majority. The seven consoles, the backdrop, the environment map and the film
-grade together add a few KB.
+**571 KB on disk / 152 KB gzipped** (125 KB brotli), of which three.js is the overwhelming
+majority. All twelve machines, the backdrop, the environment map and the film
+grade together add a handful of KB.
 
 ```
 npm install
@@ -17,19 +17,33 @@ npm run size      # per-file raw / gzip / brotli report
 
 ## What is on the page
 
-| | Console | Year | Scale in the scene |
+Twelve machines, chronological, both product lines interleaved — which is the
+story: two separate families running in parallel for twenty-eight years, and
+then the Switch collapsing them into one.
+
+| | Machine | Year | Real size |
 | --- | --- | --- | --- |
-| 01 | Super Famicom | 1990 | 200 × 72 × 242 mm |
-| 02 | Nintendo 64 | 1996 | 260 × 73 × 190 mm |
-| 03 | GameCube | 2001 | 150 × 110 × 161 mm |
-| 04 | Wii | 2006 | 44 × 157 × 215 mm |
-| 05 | Wii U | 2012 | 172 × 46 × 269 mm, plus the GamePad |
-| 06 | Nintendo Switch | 2017 | 239 × 102 mm across the Joy-Con |
-| 07 | Nintendo Switch 2 | 2025 | 272 × 116 mm, in its dock |
+| 01 | Game Boy | 1989 | 90 × 148 × 32 mm |
+| 02 | Super Famicom | 1990 | 200 × 72 × 242 mm |
+| 03 | Nintendo 64 | 1996 | 260 × 73 × 190 mm |
+| 04 | Game Boy Color | 1998 | 78 × 133 × 27 mm |
+| 05 | Game Boy Advance | 2001 | 144 × 82 × 24 mm |
+| 06 | GameCube | 2001 | 150 × 110 × 161 mm |
+| 07 | Nintendo DS | 2004 | 148 × 84 mm per half |
+| 08 | Wii | 2006 | 44 × 157 × 215 mm |
+| 09 | Nintendo 3DS | 2011 | 134 × 74 mm per half |
+| 10 | Wii U | 2012 | 172 × 46 × 269 mm, plus the GamePad |
+| 11 | Nintendo Switch | 2017 | 239 × 102 mm across the Joy-Con |
+| 12 | Nintendo Switch 2 | 2025 | 272 × 116 mm, in its dock |
 
 Everything is drawn at **one scale — 1 unit to 40 mm** — so the sizes are true
-against each other. That is why the Wii looks so slight next to the Nintendo 64:
-it is 44 mm thick and the N64 is 260 mm wide.
+against each other. A Game Boy really is a fifth the width of a Nintendo 64, and
+the Wii really is that slight beside it.
+
+Which creates a framing problem the models are not allowed to solve: a handheld
+at true scale is too small to read at the distance that suits a home console. So
+each entry carries a `view` factor and **the camera steps closer** instead — the
+geometry never lies about size.
 
 ## What these models are, and are not
 
@@ -41,7 +55,8 @@ is genuinely what most consumer plastic is.
 They are **not** reproductions, and the page carries **no logos, no wordmarks, no
 interfaces and no artwork**. The screens show an abstract gradient; the Switch 2
 dock face is deliberately blank. Nintendo, Super Famicom, Nintendo 64, GameCube,
-Wii, Wii U and Nintendo Switch are trademarks of Nintendo. This is an unofficial
+Wii, Wii U, Game Boy, Nintendo DS, Nintendo 3DS and Nintendo Switch are
+trademarks of Nintendo. This is an unofficial
 rendering exercise with no affiliation.
 
 The sales figures in the copy are the widely published lifetime numbers and are
@@ -63,7 +78,7 @@ anywhere public.
   down in exposure. It takes its hue from whichever console is currently the
   subject, so the room changes colour as the lineup moves through the eras.
 
-**One material for all seven.** A half-Lambert plastic shader with an
+**One material for all twelve.** A half-Lambert plastic shader with an
 equirectangular reflection, a Fresnel term and a metallic switch, cached by
 appearance so the whole lineup shares a handful of programs.
 
@@ -163,7 +178,7 @@ src/
   gen/textures.js      environment map, dither
   gen/noise.glsl.js    simplex + fbm chunk shared by every shader
   objects/kit.js       rounded slab / loop / cylinder, plastic material
-  objects/consoles.js  the seven builders and the lineup
+  objects/consoles.js  the twelve builders and the lineup
   objects/nebula.js    backdrop and dust
 scripts/
   size-report.mjs      raw / gzip / brotli per file

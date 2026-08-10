@@ -19,7 +19,23 @@ const AISLE_X = -9.5;    // how far to the side the track runs
 const LEAD_Z = 3;        // how far short of each console its viewing point sits
 
 const consoleZ = (i) => FIRST_Z - i * SPACING;
-const viewZ = (i) => consoleZ(i) + LEAD_Z;
+
+/**
+ * The viewing position for one console: the standard aisle offset, scaled by
+ * that object's `view` factor. A Game Boy is a fifth the width of a Nintendo 64
+ * and the scene holds true scale, so the camera closes the distance rather than
+ * the model growing. The weave in x and y keeps consecutive stations from
+ * looking like the same shot twice.
+ */
+function station(c, i) {
+  const k = c.view ?? 1;
+  const ox = c.offsetX || 0;
+  return new Vector3(
+    ox + (AISLE_X - (i % 2) * 2.0) * k,
+    c.aimY + (0.45 + (i % 3) * 0.5) * k,
+    consoleZ(i) + LEAD_Z * k
+  );
+}
 
 const PATH = new CatmullRomCurve3(
   [
@@ -27,9 +43,7 @@ const PATH = new CatmullRomCurve3(
     // console in it, and the only way to buy that is distance.
     new Vector3(AISLE_X + 5.0, 3.2, 44),
     new Vector3(AISLE_X + 2.0, 2.4, 20),
-    ...CONSOLES.map((c, i) =>
-      new Vector3(AISLE_X - (i % 2) * 2.0, 1.4 + (i % 3) * 0.55, viewZ(i))
-    ),
+    ...CONSOLES.map((c, i) => station(c, i)),
     // Pull up and away for the closing wide shot, with the same slack at this
     // end so the last panel is not fighting the last console.
     new Vector3(AISLE_X - 2.0, 4.4, consoleZ(CONSOLES.length - 1) - 14),

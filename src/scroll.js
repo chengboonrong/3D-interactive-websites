@@ -28,6 +28,12 @@ export function createTimeline() {
 
   return {
     state,
+    /**
+     * Re-read the document height. Anything that changes the length of the
+     * scroll track after boot has to call this: the max is cached to keep
+     * scrollHeight out of the scroll handler, so it will not notice on its own.
+     */
+    remeasure,
     /** Critically-damped-ish follow. dt-aware so it feels the same at 60 and 120 Hz. */
     update(dt) {
       const k = 1 - Math.pow(0.0016, Math.min(dt, 0.05));
