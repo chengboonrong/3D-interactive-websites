@@ -8,6 +8,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview --port 4173",
+    "share": "npm run build && vite preview --host --strictPort --port 4173",
     "size": "node scripts/size-report.mjs",
     "test": "node --test \"test/**/*.test.js\""
   },
