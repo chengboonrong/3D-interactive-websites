@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>AURELIA — real-time cinematic, no video</title>
-<meta name="description" content="A scroll-driven, film-grade 3D experience rendered live in WebGL. No video files, no image sequences." />
+<title>A history in plastic — seven consoles, rendered live</title>
+<meta name="description" content="Seven Nintendo home consoles, 1990 to 2025, modelled from primitives and rendered in real time in the browser. No photographs, no downloaded assets." />
 <meta name="theme-color" content="#05060a" />
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='11' fill='none' stroke='%23c9a227' stroke-width='2'/></svg>" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect x='7' y='11' width='18' height='11' rx='3' fill='none' stroke='%23c9a227' stroke-width='2'/></svg>" />
 <link rel="stylesheet" href="/src/style.css" />
 </head>
 <body>
@@ -15,35 +15,59 @@
   <div id="grade" aria-hidden="true"></div>
 
   <main id="scroll">
-    <header class="panel" data-in="0.00" data-out="0.16">
-      <p class="kicker">Real-time · WebGL · Zero video</p>
-      <h1>Aurelia</h1>
-      <p class="lede">Every frame on this page is being solved by your GPU right now. Nothing here was recorded.</p>
+    <header class="panel">
+      <p class="kicker">Real-time · WebGL · Zero downloaded assets</p>
+      <h1>A history<br>in plastic</h1>
+      <p class="lede">Seven home consoles, 1990 to 2025, built from rounded slabs and cylinders and solved by your GPU as you scroll. Not one of them is a photograph.</p>
       <p class="scrollcue"><span></span>Scroll</p>
     </header>
 
-    <section class="panel" data-in="0.22" data-out="0.38">
-      <p class="kicker">01 — Cloth</p>
-      <h2>Fabric that has never been filmed</h2>
-      <p class="lede">A verlet lattice of 1,600 masses, re-solved eight times per frame, lit by a thin-film interference model. The drape reacts to how fast you scroll.</p>
+    <section class="panel" data-station="0">
+      <p class="kicker">1990 · 16-bit</p>
+      <h2>Super Famicom</h2>
+      <p class="lede">49.10 million sold worldwide as the Super Famicom and the SNES. Two hundred millimetres of grey ABS with a purple slider, and a shoulder curve nobody has really improved on.</p>
     </section>
 
-    <section class="panel" data-in="0.50" data-out="0.66">
-      <p class="kicker">02 — Field</p>
-      <h2>Four thousand shards, one draw call</h2>
-      <p class="lede">Instanced geometry displaced entirely on the vertex stage. The terrain does not exist in memory — it is recomputed from noise every frame.</p>
+    <section class="panel" data-station="1">
+      <p class="kicker">1996 · 64-bit</p>
+      <h2>Nintendo&nbsp;64</h2>
+      <p class="lede">32.93 million sold. Four controller ports as standard when everyone else shipped two, and an analogue stick in the box before anyone was asking for one.</p>
     </section>
 
-    <section class="panel" data-in="0.74" data-out="0.90">
-      <p class="kicker">03 — Monolith</p>
-      <h2>Reflections without a photograph</h2>
-      <p class="lede">The environment reflected in this surface is a 512×256 gradient synthesised in a canvas at boot. It ships as zero bytes.</p>
+    <section class="panel" data-station="2">
+      <p class="kicker">2001 · Optical</p>
+      <h2>GameCube</h2>
+      <p class="lede">21.74 million sold. A 150&nbsp;mm cube with a carrying handle moulded into the back — the only home console Nintendo has ever asked you to pick up and take somewhere.</p>
     </section>
 
-    <footer class="panel" data-in="0.94" data-out="1.00">
-      <p class="kicker">Payload</p>
-      <h2 id="weight">Under 300 KB, gzipped</h2>
-      <p class="lede">The whole experience — renderer, shaders, simulation, textures — weighs less than a two-second video clip.</p>
+    <section class="panel" data-station="3">
+      <p class="kicker">2006 · Motion</p>
+      <h2>Wii</h2>
+      <p class="lede">101.63 million sold, more than any other console of its generation. Also the smallest object in this lineup: 44&nbsp;mm thick, standing on a cradle.</p>
+    </section>
+
+    <section class="panel" data-station="4">
+      <p class="kicker">2012 · Second screen</p>
+      <h2>Wii&nbsp;U</h2>
+      <p class="lede">13.56 million sold — the fewest of any Nintendo home console. The idea was a decade early and the tablet was tethered to the living room.</p>
+    </section>
+
+    <section class="panel" data-station="5">
+      <p class="kicker">2017 · Hybrid</p>
+      <h2>Nintendo Switch</h2>
+      <p class="lede">Over 150 million sold. The dock stopped being a console and became a stand, and the two halves of the controller slid off the sides.</p>
+    </section>
+
+    <section class="panel" data-station="6">
+      <p class="kicker">2025 · Hybrid</p>
+      <h2>Nintendo Switch&nbsp;2</h2>
+      <p class="lede">Launched 5 June 2025. Two hundred and seventy-two millimetres across the rails — 33&nbsp;mm wider than the original — with the colour moved off the shells and onto the inner edge.</p>
+    </section>
+
+    <footer class="panel">
+      <p class="kicker">One scale, no assets</p>
+      <h2>Thirty-five years, <span data-fact="kb">143</span>&nbsp;KB</h2>
+      <p class="lede">Every console here is drawn at the same scale, 1&nbsp;unit to 40&nbsp;mm, so the sizes are true against each other. Nothing was downloaded to draw them.</p>
     </footer>
   </main>
 
@@ -56,7 +80,7 @@
     </dl>
   </aside>
 
-  <noscript><p class="fallback">This experience is rendered live and needs JavaScript.</p></noscript>
+  <noscript><p class="fallback">This page is rendered live and needs JavaScript.</p></noscript>
   <script type="module" src="/src/main.js"></script>
 </body>
 </html>
